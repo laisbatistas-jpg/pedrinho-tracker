@@ -6,28 +6,31 @@ type Event = {
   id: string;
   type: "amamentacao" | "soneca" | "outro";
   side?: "esquerdo" | "direito";
-  duration?: number; // seconds
+  duration?: number;
   timestamp: number;
 };
 
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [timer, setTimer] = useState<{ side: "esquerdo" | "direito"; start: number } | null>(null);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setNow(Date.now());
     const saved = localStorage.getItem("pedrinho-events");
     if (saved) setEvents(JSON.parse(saved));
+
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pedrinho-events", JSON.stringify(events));
-  }, [events]);
-
-  useEffect(() => {
-    const i = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(i);
-  }, []);
+    if (mounted) {
+      localStorage.setItem("pedrinho-events", JSON.stringify(events));
+    }
+  }, [events, mounted]);
 
   const startFeed = (side: "esquerdo" | "direito") => {
     setTimer({ side, start: Date.now() });
@@ -61,7 +64,7 @@ export default function Home() {
     for (let i = 1; i < sorted.length; i++) {
       sum += sorted[i].timestamp - sorted[i - 1].timestamp;
     }
-    return Math.round(sum / (sorted.length - 1) / 60000); // minutes
+    return Math.round(sum / (sorted.length - 1) / 60000);
   })();
 
   const elapsed = timer ? Math.floor((now - timer.start) / 1000) : 0;
@@ -71,9 +74,16 @@ export default function Home() {
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
+  if (!mounted) {
+    return (
+      <div className="max-w-md mx-auto min-h-screen bg-zinc-950 text-white flex items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-md mx-auto min-h-screen bg-zinc-950 text-white pb-20">
-      {/* Header */}
       <header className="p-6 flex items-center gap-4">
         <div className="w-14 h-14 rounded-full bg-purple-900 flex items-center justify-center text-2xl">
           👶
@@ -84,7 +94,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Amamentação em destaque */}
       <section className="mx-4 p-6 rounded-3xl bg-gradient-to-b from-purple-950 to-zinc-900 border border-purple-800/50">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Amamentação</h2>
@@ -131,13 +140,11 @@ export default function Home() {
 
         {todayFeeds.length > 0 && !timer && (
           <div className="mt-6 text-center text-sm text-purple-300">
-            Última: {lastFeeds[0] ? formatTime(lastFeeds[0].duration || 0) : "-"} ·{" "}
-            Hoje: {todayFeeds.length} mamadas
+            Última: {lastFeeds[0] ? formatTime(lastFeeds[0].duration || 0) : "-"} · Hoje: {todayFeeds.length} mamadas
           </div>
         )}
       </section>
 
-      {/* Resumo */}
       <section className="mx-4 mt-6 space-y-3">
         <div className="p-4 rounded-2xl bg-zinc-900 flex justify-between">
           <div>
@@ -152,7 +159,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Últimos eventos */}
         <div className="p-4 rounded-2xl bg-zinc-900">
           <h3 className="font-medium mb-3">Últimas mamadas</h3>
           {lastFeeds.length === 0 ? (
@@ -177,7 +183,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Bottom nav placeholder */}
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-zinc-900 border-t border-zinc-800 flex justify-around py-3">
         <span className="text-purple-400 text-sm">Início</span>
         <span className="text-zinc-500 text-sm">Histórico</span>
