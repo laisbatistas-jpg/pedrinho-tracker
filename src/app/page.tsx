@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 type Event = {
   id: string;
-  type: "amamentacao" | "soneca" | "outro";
+  type: "amamentacao" | "soneca";
   side?: "esquerdo" | "direito";
   duration?: number;
   timestamp: number;
@@ -12,36 +12,34 @@ type Event = {
 
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
-  const [timer, setTimer] = useState<{ side: "esquerdo" | "direito"; start: number } | null>(null);
+  const [timer, setTimer] = useState<{ type: "amamentacao" | "soneca"; side?: "esquerdo" | "direito"; start: number } | null>(null);
   const [now, setNow] = useState(0);
   const [mounted, setMounted] = useState(false);
+  const [tab, setTab] = useState<"inicio" | "historico" | "sono">("inicio");
 
   useEffect(() => {
     setMounted(true);
     setNow(Date.now());
     const saved = localStorage.getItem("pedrinho-events");
     if (saved) setEvents(JSON.parse(saved));
-
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    if (mounted) {
-      localStorage.setItem("pedrinho-events", JSON.stringify(events));
-    }
+    if (mounted) localStorage.setItem("pedrinho-events", JSON.stringify(events));
   }, [events, mounted]);
 
-  const startFeed = (side: "esquerdo" | "direito") => {
-    setTimer({ side, start: Date.now() });
+  const startTimer = (type: "amamentacao" | "soneca", side?: "esquerdo" | "direito") => {
+    setTimer({ type, side, start: Date.now() });
   };
 
-  const stopFeed = () => {
+  const stopTimer = () => {
     if (!timer) return;
     const duration = Math.floor((Date.now() - timer.start) / 1000);
     const newEvent: Event = {
       id: Date.now().toString(),
-      type: "amamentacao",
+      type: timer.type,
       side: timer.side,
       duration,
       timestamp: timer.start,
@@ -50,144 +48,101 @@ export default function Home() {
     setTimer(null);
   };
 
-  const lastFeeds = events.filter((e) => e.type === "amamentacao").slice(0, 5);
-  const todayFeeds = events.filter(
-    (e) =>
-      e.type === "amamentacao" &&
-      new Date(e.timestamp).toDateString() === new Date().toDateString()
-  );
-
-  const avgInterval = (() => {
-    if (todayFeeds.length < 2) return null;
-    const sorted = [...todayFeeds].sort((a, b) => a.timestamp - b.timestamp);
-    let sum = 0;
-    for (let i = 1; i < sorted.length; i++) {
-      sum += sorted[i].timestamp - sorted[i - 1].timestamp;
-    }
-    return Math.round(sum / (sorted.length - 1) / 60000);
-  })();
-
-  const elapsed = timer ? Math.floor((now - timer.start) / 1000) : 0;
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
   };
 
+  const elapsed = timer ? Math.floor((now - timer.start) / 1000) : 0;
+
+  const today = new Date().toDateString();
+  const todayFeeds = events.filter(e => e.type === "amamentacao" && new Date(e.timestamp).toDateString() === today);
+  const todaySleep = events.filter(e => e.type === "soneca" && new Date(e.timestamp).toDateString() === today);
+
   if (!mounted) {
-    return (
-      <div className="max-w-md mx-auto min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-        <p>Carregando...</p>
-      </div>
-    );
+    return <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">Carregando...</div>;
   }
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-zinc-950 text-white pb-20">
-      <header className="p-6 flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-purple-900 flex items-center justify-center text-2xl">
-          👶
-        </div>
+    <div className="max-w-md mx-auto min-h-screen bg-zinc-950 text-white flex flex-col">
+      {/* Header */}
+      <header className="p-5 flex items-center gap-3 border-b border-zinc-800">
+        <div className="w-12 h-12 rounded-full bg-purple-800 flex items-center justify-center text-2xl">👶</div>
         <div>
-          <h1 className="text-2xl font-bold">Pedrinho</h1>
-          <p className="text-purple-300 text-sm">Bem-vindo(a) de volta!</p>
+          <h1 className="text-xl font-bold">Pedrinho</h1>
+          <p className="text-zinc-400 text-sm">Acompanhamento do dia</p>
         </div>
       </header>
 
-      <section className="mx-4 p-6 rounded-3xl bg-gradient-to-b from-purple-950 to-zinc-900 border border-purple-800/50">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Amamentação</h2>
-          {timer && (
-            <span className="text-sm bg-purple-600 px-3 py-1 rounded-full">
-              Em andamento
-            </span>
-          )}
-        </div>
-
-        {timer ? (
-          <div className="text-center">
-            <div className="text-6xl font-bold tracking-tight my-6">
-              {formatTime(elapsed)}
+      {/* Conteúdo */}
+      <main className="flex-1 overflow-auto pb-20">
+        {tab === "inicio" && (
+          <div className="p-4 space-y-4">
+            {/* Amamentação */}
+            <div className="p-5 rounded-2xl bg-zinc-900 border border-purple-800/40">
+              <h2 className="text-lg font-semibold mb-4">Amamentação</h2>
+              {timer?.type === "amamentacao" ? (
+                <div className="text-center">
+                  <div className="text-5xl font-bold my-4">{formatTime(elapsed)}</div>
+                  <p className="text-purple-300 mb-4">Seio {timer.side === "esquerdo" ? "Esquerdo" : "Direito"}</p>
+                  <button onClick={stopTimer} className="w-full py-3 rounded-xl bg-purple-600 font-medium">Parar</button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => startTimer("amamentacao", "esquerdo")} className="py-6 rounded-xl bg-pink-900/50 border border-pink-700">Esquerdo</button>
+                  <button onClick={() => startTimer("amamentacao", "direito")} className="py-6 rounded-xl bg-emerald-900/50 border border-emerald-700">Direito</button>
+                </div>
+              )}
+              <p className="text-center text-sm text-zinc-400 mt-4">Hoje: {todayFeeds.length} mamadas</p>
             </div>
-            <p className="text-purple-300 mb-6">
-              Seio {timer.side === "esquerdo" ? "Esquerdo" : "Direito"}
-            </p>
-            <button
-              onClick={stopFeed}
-              className="w-full py-4 rounded-2xl bg-purple-600 hover:bg-purple-500 font-semibold text-lg"
-            >
-              Parar e salvar
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => startFeed("esquerdo")}
-              className="aspect-square rounded-2xl bg-pink-900/40 border border-pink-700/50 flex flex-col items-center justify-center hover:bg-pink-900/60 transition"
-            >
-              <span className="text-4xl mb-2">🤱</span>
-              <span className="font-medium">Esquerdo</span>
-            </button>
-            <button
-              onClick={() => startFeed("direito")}
-              className="aspect-square rounded-2xl bg-green-900/40 border border-green-700/50 flex flex-col items-center justify-center hover:bg-green-900/60 transition"
-            >
-              <span className="text-4xl mb-2">🤱</span>
-              <span className="font-medium">Direito</span>
-            </button>
+
+            {/* Sono */}
+            <div className="p-5 rounded-2xl bg-zinc-900 border border-blue-800/40">
+              <h2 className="text-lg font-semibold mb-4">Soneca</h2>
+              {timer?.type === "soneca" ? (
+                <div className="text-center">
+                  <div className="text-5xl font-bold my-4">{formatTime(elapsed)}</div>
+                  <button onClick={stopTimer} className="w-full py-3 rounded-xl bg-blue-600 font-medium">Parar</button>
+                </div>
+              ) : (
+                <button onClick={() => startTimer("soneca")} className="w-full py-6 rounded-xl bg-blue-900/50 border border-blue-700">
+                  Iniciar soneca
+                </button>
+              )}
+              <p className="text-center text-sm text-zinc-400 mt-4">Hoje: {todaySleep.length} sonecas</p>
+            </div>
           </div>
         )}
 
-        {todayFeeds.length > 0 && !timer && (
-          <div className="mt-6 text-center text-sm text-purple-300">
-            Última: {lastFeeds[0] ? formatTime(lastFeeds[0].duration || 0) : "-"} · Hoje: {todayFeeds.length} mamadas
+        {tab === "historico" && (
+          <div className="p-4">
+            <h2 className="text-lg font-semibold mb-4">Histórico de hoje</h2>
+            {[...todayFeeds, ...todaySleep]
+              .sort((a, b) => b.timestamp - a.timestamp)
+              .map(e => (
+                <div key={e.id} className="flex justify-between py-3 border-b border-zinc-800 text-sm">
+                  <span>{e.type === "amamentacao" ? "🤱 Mamada" : "😴 Soneca"} {e.side ? `(${e.side === "esquerdo" ? "Esq" : "Dir"})` : ""}</span>
+                  <span>{formatTime(e.duration || 0)}</span>
+                </div>
+              ))}
+            {todayFeeds.length + todaySleep.length === 0 && <p className="text-zinc-500">Nada registrado ainda.</p>}
           </div>
         )}
-      </section>
 
-      <section className="mx-4 mt-6 space-y-3">
-        <div className="p-4 rounded-2xl bg-zinc-900 flex justify-between">
-          <div>
-            <p className="text-zinc-400 text-sm">Intervalo médio hoje</p>
-            <p className="text-xl font-semibold">
-              {avgInterval ? `${avgInterval} min` : "—"}
-            </p>
+        {tab === "sono" && (
+          <div className="p-4 text-center text-zinc-400">
+            Tela de sono em construção. Use o botão na aba Início por enquanto.
           </div>
-          <div className="text-right">
-            <p className="text-zinc-400 text-sm">Mamadas hoje</p>
-            <p className="text-xl font-semibold">{todayFeeds.length}</p>
-          </div>
-        </div>
+        )}
+      </main>
 
-        <div className="p-4 rounded-2xl bg-zinc-900">
-          <h3 className="font-medium mb-3">Últimas mamadas</h3>
-          {lastFeeds.length === 0 ? (
-            <p className="text-zinc-500 text-sm">Nenhuma ainda</p>
-          ) : (
-            lastFeeds.map((e) => (
-              <div
-                key={e.id}
-                className="flex justify-between py-2 border-b border-zinc-800 last:border-0 text-sm"
-              >
-                <span>
-                  {new Date(e.timestamp).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  · {e.side === "esquerdo" ? "Esq" : "Dir"}
-                </span>
-                <span>{formatTime(e.duration || 0)}</span>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
-
+      {/* Navegação fixa */}
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-zinc-900 border-t border-zinc-800 flex justify-around py-3">
-        <span className="text-purple-400 text-sm">Início</span>
-        <span className="text-zinc-500 text-sm">Histórico</span>
-        <span className="text-zinc-500 text-sm">Sono</span>
-        <span className="text-zinc-500 text-sm">Mais</span>
+        <button onClick={() => setTab("inicio")} className={tab === "inicio" ? "text-purple-400 font-medium" : "text-zinc-400"}>Início</button>
+        <button onClick={() => setTab("historico")} className={tab === "historico" ? "text-purple-400 font-medium" : "text-zinc-400"}>Histórico</button>
+        <button onClick={() => setTab("sono")} className={tab === "sono" ? "text-purple-400 font-medium" : "text-zinc-400"}>Sono</button>
+        <button className="text-zinc-500">Mais</button>
       </nav>
     </div>
   );
