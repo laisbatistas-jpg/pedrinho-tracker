@@ -8,7 +8,7 @@ type Event = {
   id: string;
   type: EventType;
   side?: "esquerdo" | "direito";
-  duration?: number;
+  duration?: number; // segundos
   diaper?: "molhada" | "suja" | "mista";
   timestamp: number;
   endTimestamp?: number;
@@ -18,10 +18,9 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [activeTab, setActiveTab] = useState<"inicio" | "amamentacao" | "sono" | "fraldas" | "stats">("inicio");
   const [timer, setTimer] = useState<{ type: "amamentacao" | "sono"; side?: "esquerdo" | "direito"; start: number } | null>(null);
-  const [now, setNow] = useState(0);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    setNow(Date.now());
     const saved = localStorage.getItem("pedrinho-events-v2");
     if (saved) setEvents(JSON.parse(saved));
   }, []);
@@ -108,8 +107,9 @@ export default function Home() {
   const lastFeed = feedsToday[0];
   const totalSleepSec = sleepToday.reduce((acc, e) => acc + (e.duration || 0), 0);
 
-  const elapsed = timer && now > 0 ? Math.floor((now - timer.start) / 1000) : 0;
+  const elapsed = timer ? Math.floor((now - timer.start) / 1000) : 0;
 
+  // Previsões simples
   const avgFeedInterval = feedsToday.length >= 2
     ? Math.round(
         feedsToday.slice(0, -1).reduce((acc, e, i) => acc + (feedsToday[i].timestamp - feedsToday[i + 1].timestamp), 0) /
@@ -118,10 +118,11 @@ export default function Home() {
       )
     : 120;
 
-  const nextFeedMin = lastFeed && now > 0 ? Math.max(0, avgFeedInterval - Math.floor((now - lastFeed.timestamp) / 60000)) : null;
+  const nextFeedMin = lastFeed ? Math.max(0, avgFeedInterval - Math.floor((now - lastFeed.timestamp) / 60000)) : null;
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-zinc-950 text-white flex flex-col">
+      {/* Header */}
       <header className="p-5 flex items-center gap-3">
         <div className="w-14 h-14 rounded-full bg-purple-900 flex items-center justify-center text-3xl">👶</div>
         <div>
@@ -133,6 +134,7 @@ export default function Home() {
       <main className="flex-1 px-4 pb-24 overflow-y-auto">
         {activeTab === "inicio" && (
           <>
+            {/* Amamentação destaque */}
             <section className="bg-zinc-900/80 rounded-3xl p-5 border border-purple-900/50 mb-4">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <span>🤱</span> Amamentação
@@ -153,6 +155,7 @@ export default function Home() {
               </div>
             </section>
 
+            {/* Cards de resumo */}
             <div className="space-y-3">
               <div className="bg-zinc-900 rounded-2xl p-4">
                 <p className="text-purple-300 text-sm">Última mamada</p>
@@ -308,6 +311,7 @@ export default function Home() {
         )}
       </main>
 
+      {/* Bottom Nav */}
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-zinc-900 border-t border-zinc-800 flex justify-around py-3 text-xs">
         {[
           { id: "inicio", label: "Início", icon: "🏠" },
@@ -322,3 +326,10 @@ export default function Home() {
             className={`flex flex-col items-center ${activeTab === tab.id ? "text-purple-400" : "text-zinc-500"}`}
           >
             <span className="text-xl">{tab.icon}</span>
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
