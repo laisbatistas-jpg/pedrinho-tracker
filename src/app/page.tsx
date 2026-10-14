@@ -18,9 +18,10 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [activeTab, setActiveTab] = useState<"inicio" | "amamentacao" | "sono" | "fraldas" | "stats">("inicio");
   const [timer, setTimer] = useState<{ type: "amamentacao" | "sono"; side?: "esquerdo" | "direito"; start: number } | null>(null);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
 
   useEffect(() => {
+    setNow(Date.now());
     const saved = localStorage.getItem("pedrinho-events-v2");
     if (saved) setEvents(JSON.parse(saved));
   }, []);
@@ -107,7 +108,7 @@ export default function Home() {
   const lastFeed = feedsToday[0];
   const totalSleepSec = sleepToday.reduce((acc, e) => acc + (e.duration || 0), 0);
 
-  const elapsed = timer ? Math.floor((now - timer.start) / 1000) : 0;
+  const elapsed = timer && now > 0 ? Math.floor((now - timer.start) / 1000) : 0;
 
   const avgFeedInterval = feedsToday.length >= 2
     ? Math.round(
@@ -117,7 +118,7 @@ export default function Home() {
       )
     : 120;
 
-  const nextFeedMin = lastFeed ? Math.max(0, avgFeedInterval - Math.floor((now - lastFeed.timestamp) / 60000)) : null;
+  const nextFeedMin = lastFeed && now > 0 ? Math.max(0, avgFeedInterval - Math.floor((now - lastFeed.timestamp) / 60000)) : null;
 
   return (
     <div className="max-w-md mx-auto min-h-screen bg-zinc-950 text-white flex flex-col">
@@ -321,10 +322,3 @@ export default function Home() {
             className={`flex flex-col items-center ${activeTab === tab.id ? "text-purple-400" : "text-zinc-500"}`}
           >
             <span className="text-xl">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
-      </nav>
-    </div>
-  );
-}
