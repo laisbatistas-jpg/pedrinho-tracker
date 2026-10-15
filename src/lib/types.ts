@@ -150,7 +150,8 @@ export type Settings = {
   photo?: string; // foto de perfil do bebê (pequena, quadrada)
   birthDate: string; // YYYY-MM-DD ou ""
   sex: "menino" | "menina";
-  alertFeedHours: number; // 0 = desligado
+  alertFeedHours: number; // intervalo entre mamadas, em horas (ex.: 1.5 = 1h30). 0 = desligado
+  alertFeedLeadMin: number; // avisar tantos minutos antes (0 = só na hora)
   alertSleepHours: number; // 0 = desligado
 };
 
@@ -159,6 +160,7 @@ export const DEFAULT_SETTINGS: Settings = {
   birthDate: "",
   sex: "menino",
   alertFeedHours: 3,
+  alertFeedLeadMin: 0,
   alertSleepHours: 0,
 };
 

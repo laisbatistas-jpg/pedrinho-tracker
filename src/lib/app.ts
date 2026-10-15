@@ -17,6 +17,24 @@ import {
   startOfDay,
 } from "./utils";
 
+/** Mostra o aviso pelo service worker (funciona melhor no iPhone/Android) e, se não der, pelo navegador. */
+async function showNotice(title: string, body: string, tag: string) {
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration();
+    if (reg) {
+      await reg.showNotification(title, { body, tag, icon: "/icon-192.png", badge: "/icon-192.png" });
+      return;
+    }
+  } catch {
+    /* tenta o jeito simples */
+  }
+  try {
+    new Notification(title, { body, tag });
+  } catch {
+    /* alguns aparelhos não permitem */
+  }
+}
+
 export type Alert = {
   id: string; // identifica o tipo
   episode: string; // identifica esta ocorrência (para avisar só uma vez)
@@ -145,7 +163,10 @@ export function useApp() {
     }
     const avgFeedInterval = gaps.length ? Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length) : 120;
 
-    const nextFeedAt = lastFeed ? lastFeed.timestamp + avgFeedInterval * 60000 : null;
+    // intervalo combinado (Configurações) tem prioridade sobre a média observada
+    const feedIntervalConfigured = settings.alertFeedHours > 0;
+    const feedIntervalMin = feedIntervalConfigured ? Math.round(settings.alertFeedHours * 60) : avgFeedInterval;
+    const nextFeedAt = lastFeed ? lastFeed.timestamp + feedIntervalMin * 60000 : null;
     const nextFeedMin =
       nextFeedAt && nowTs ? Math.max(0, Math.ceil((nextFeedAt - nowTs) / 60000)) : null;
 
@@ -208,12 +229,14 @@ export function useApp() {
       totalSleepSec,
       longestSleepSec,
       avgFeedInterval,
+      feedIntervalMin,
+      feedIntervalConfigured,
       nextFeedAt,
       nextFeedMin,
       nap,
       week,
     };
-  }, [events, timer, settings.birthDate, nowTs]);
+  }, [events, timer, settings.birthDate, settings.alertFeedHours, nowTs]);
 
   const elapsed = timer && nowTs ? Math.max(0, Math.floor((nowTs - timer.start) / 1000)) : 0;
 
@@ -223,16 +246,26 @@ export function useApp() {
     if (!nowTs) return [];
     const list: Alert[] = [];
 
-    const { lastFeed } = derived;
+    const { lastFeed, feedIntervalMin } = derived;
     if (settings.alertFeedHours > 0 && !timer && lastFeed) {
-      const sinceMs = nowTs - lastFeed.timestamp;
-      if (sinceMs > settings.alertFeedHours * 3600000) {
+      const dueAt = lastFeed.timestamp + feedIntervalMin * 60000;
+      const lead = Math.max(0, settings.alertFeedLeadMin || 0) * 60000;
+      const every = formatDur(feedIntervalMin * 60);
+      if (nowTs >= dueAt) {
         list.push({
           id: "feed",
-          episode: lastFeed.id,
+          episode: `${lastFeed.id}:due`,
+          tone: "warn",
+          title: "Hora da mamada!",
+          text: `Faz ${formatDur(Math.floor((nowTs - lastFeed.timestamp) / 1000))} desde a última (intervalo de ${every}).`,
+        });
+      } else if (lead > 0 && nowTs >= dueAt - lead) {
+        list.push({
+          id: "feed",
+          episode: `${lastFeed.id}:soon`,
           tone: "info",
-          title: "Hora da mamada?",
-          text: `Faz ${formatDur(Math.floor(sinceMs / 1000))} desde a última mamada.`,
+          title: `Mamada em ${Math.max(1, Math.ceil((dueAt - nowTs) / 60000))} min`,
+          text: `Prevista para ${formatClock(dueAt)} (intervalo de ${every}).`,
         });
       }
     }
@@ -303,7 +336,7 @@ export function useApp() {
       });
     }
     return list;
-  }, [derived, settings.alertFeedHours, settings.alertSleepHours, timer, elapsed, health, visits, vaccines, nowTs]);
+  }, [derived, settings.alertFeedHours, settings.alertFeedLeadMin, settings.alertSleepHours, timer, elapsed, health, visits, vaccines, nowTs]);
 
   /* ================= notificações do navegador ================= */
 
@@ -325,11 +358,7 @@ export function useApp() {
       if (seen.has(key)) continue;
       seen.add(key);
       changed = true;
-      try {
-        new Notification(a.title, { body: a.text, tag: key });
-      } catch {
-        /* alguns aparelhos não permitem */
-      }
+      void showNotice(a.title, a.text, key);
     }
     if (changed) {
       try {

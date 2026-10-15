@@ -45,3 +45,17 @@ self.addEventListener("fetch", (event) => {
     })()
   );
 });
+
+// Toque na notificação: volta para o app.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const all = await clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const c of all) {
+        if ("focus" in c) return c.focus();
+      }
+      return clients.openWindow("/");
+    })()
+  );
+});

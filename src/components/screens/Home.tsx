@@ -12,7 +12,7 @@ import { DAY, formatClock, formatDate, formatDur, formatTime, sideLabel } from "
 
 export function HomeScreen({ app, go }: ScreenProps) {
   const {
-    timer, elapsed, now, suggestedSide, lastBreast, nextFeedAt, nextFeedMin, avgFeedInterval,
+    timer, elapsed, now, suggestedSide, lastBreast, nextFeedAt, nextFeedMin, avgFeedInterval, feedIntervalMin, feedIntervalConfigured,
     feedsToday, bottleMlToday, sleepToday, totalSleepSec, longestSleepSec, diapersToday, week, todayEvents,
   } = app;
 
@@ -151,7 +151,7 @@ export function HomeScreen({ app, go }: ScreenProps) {
             <>
               <p className="grad-text text-4xl font-extrabold leading-tight tabular-nums">{formatClock(nextFeedAt)}</p>
               <p className="text-xs text-[var(--muted)]">
-                {nextFeedMin === 0 ? "Já está na hora" : `em ~${nextFeedMin} min`} • intervalo médio {avgFeedInterval} min
+                {nextFeedMin === 0 ? "Já está na hora" : `em ~${nextFeedMin} min`} • intervalo {feedIntervalConfigured ? "combinado" : "médio"} {feedIntervalMin} min
               </p>
             </>
           ) : (

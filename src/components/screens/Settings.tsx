@@ -45,6 +45,7 @@ export function SettingsScreen({ app, go }: ScreenProps) {
   const [family, setFamily] = useState(prefs.familyCode);
   const [msg, setMsg] = useState("");
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [customMin, setCustomMin] = useState("");
   const photoRef = useRef<HTMLInputElement>(null);
   const [usedChars, setUsedChars] = useState(0);
   useEffect(() => {
@@ -208,15 +209,52 @@ export function SettingsScreen({ app, go }: ScreenProps) {
 
       <section className="glass p-5 space-y-4">
         <h2 className="font-semibold text-lg">Avisos</h2>
-        <Field label="Avisar se passar de … horas sem mamar" group>
+        <Field label="Intervalo entre as mamadas" group>
           <Chips<number>
             value={settings.alertFeedHours}
-            onChange={(v) => patch({ alertFeedHours: v })}
+            onChange={(v) => {
+              patch({ alertFeedHours: v });
+              setCustomMin("");
+            }}
             options={[
               { value: 0, label: "Desligado" },
+              { value: 1, label: "1h" },
+              { value: 1.5, label: "1h30" },
               { value: 2, label: "2h" },
+              { value: 2.5, label: "2h30" },
               { value: 3, label: "3h" },
+              { value: 3.5, label: "3h30" },
               { value: 4, label: "4h" },
+            ]}
+          />
+          <div className="mt-3 flex items-center gap-2">
+            <input
+              inputMode="numeric"
+              className="field"
+              value={customMin}
+              onChange={(e) => setCustomMin(e.target.value.replace(/\D/g, "").slice(0, 3))}
+              onBlur={() => {
+                const m = parseInt(customMin, 10);
+                if (m >= 20 && m <= 480) patch({ alertFeedHours: m / 60 });
+              }}
+              placeholder="Outro valor, em minutos (ex.: 75)"
+              aria-label="Intervalo em minutos"
+            />
+          </div>
+          <p className="text-xs text-[var(--muted)] mt-2">
+            Contado a partir do <strong>início</strong> da última mamada. Com isso, a tela inicial mostra a hora da próxima e o app avisa quando chegar.
+            {settings.alertFeedHours > 0 && ` Agora: a cada ${Math.round(settings.alertFeedHours * 60)} minutos.`}
+          </p>
+        </Field>
+        <Field label="Avisar com antecedência" group>
+          <Chips<number>
+            value={settings.alertFeedLeadMin}
+            onChange={(v) => patch({ alertFeedLeadMin: v })}
+            options={[
+              { value: 0, label: "Só na hora" },
+              { value: 5, label: "5 min antes" },
+              { value: 10, label: "10 min antes" },
+              { value: 15, label: "15 min antes" },
             ]}
           />
         </Field>
