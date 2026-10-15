@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Chips, Empty, Field, PhotoField, PhotoThumbs, ScreenHeader, Sheet, SheetActions } from "@/components/ui";
-import { countdownLabel, daysUntil, downloadIcs, listAppointments, placeLine, visitTitle, type Appointment } from "@/lib/agenda";
+import { countdownLabel, daysUntil, addToCalendar, listAppointments, placeLine, visitTitle, type Appointment } from "@/lib/agenda";
 import type { ScreenProps } from "@/lib/nav";
 import { VISIT_KINDS } from "@/lib/reference";
 import type { Visit, VisitKind, VisitOutcome, VisitStatus } from "@/lib/types";
@@ -160,7 +160,7 @@ function VisitCard({
           )}
           {appt && (
             <button
-              onClick={() => downloadIcs(appt, babyName || "Pedrinho")}
+              onClick={() => addToCalendar(appt, babyName || "Pedrinho")}
               className="btn-ghost flex-1 h-10 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5"
             >
               <Icon name="bell" className="w-4 h-4" /> Lembrete

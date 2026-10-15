@@ -152,8 +152,40 @@ export function buildIcs(a: Appointment, babyName: string): string {
     .join("\r\n");
 }
 
-export function downloadIcs(a: Appointment, babyName: string) {
-  const blob = new Blob([buildIcs(a, babyName)], { type: "text/calendar;charset=utf-8" });
+/** Endereço que devolve o lembrete pronto (o Safari abre direto no Calendário). */
+export function icsUrl(a: Appointment, babyName: string): string {
+  const q = new URLSearchParams({ s: String(a.timestamp), t: a.title, k: a.key, src: a.source, n: babyName });
+  if (a.place) q.set("p", a.place);
+  if (a.address) q.set("a", a.address);
+  if (a.doctor) q.set("d", a.doctor);
+  if (a.reason) q.set("r", a.reason);
+  return `/api/ics?${q.toString()}`;
+}
+
+/**
+ * Adiciona ao Calendário do celular.
+ * 1) Folha de compartilhar do iPhone (tem "Adicionar ao Calendário"; funciona no Safari e no Chrome).
+ * 2) Se não houver, abre o link do lembrete (o Safari abre no Calendário).
+ * 3) Último caso: baixa o arquivo.
+ */
+export async function addToCalendar(a: Appointment, babyName: string): Promise<void> {
+  const text = buildIcs(a, babyName);
+  try {
+    const file = new File([text], "lembrete-pedrinho.ics", { type: "text/calendar" });
+    if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file], title: `${babyName}: ${a.title}` });
+      return;
+    }
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") return; // a pessoa fechou a folha
+  }
+  try {
+    window.location.href = icsUrl(a, babyName);
+    return;
+  } catch {
+    /* tenta baixar */
+  }
+  const blob = new Blob([text], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;

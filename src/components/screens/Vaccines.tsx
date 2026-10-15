@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Chips, Field, PhotoField, ScreenHeader, Sheet, SheetActions } from "@/components/ui";
-import { downloadIcs, placeLine } from "@/lib/agenda";
+import { addToCalendar, placeLine } from "@/lib/agenda";
 import type { ScreenProps } from "@/lib/nav";
 import { VACCINES, type VaccineDef } from "@/lib/reference";
 import { VACCINE_REACTIONS, type VaccineRecord } from "@/lib/types";
@@ -291,10 +291,10 @@ function VaccineForm({
       />
       {mode === "agendada" && Number.isFinite(fromLocalInput(when)) && (
         <button
-          onClick={() => downloadIcs(agendaItem(), babyName)}
+          onClick={() => addToCalendar(agendaItem(), babyName)}
           className="btn-ghost w-full h-12 mt-3 rounded-2xl font-semibold"
         >
-          Lembrar no calendário do celular
+          Adicionar ao Calendário do celular
         </button>
       )}
       {(rec?.doneAt || rec?.scheduledAt) && (
