@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
 import { NapCard } from "@/components/NapCard";
-import { AlertList, EventForm, MiniBars, Stat, Timeline } from "@/components/ui";
+import { AlertList, EventForm, MiniBars, Stat, Timeline, WhoPicker } from "@/components/ui";
 import { BottleSheet, SideButton } from "./Feed";
 import type { ScreenProps } from "@/lib/nav";
 import type { BabyEvent } from "@/lib/types";
@@ -31,15 +31,15 @@ export function HomeScreen({ app, go }: ScreenProps) {
         <section className="glass p-5">
           <h2 className="font-semibold text-lg leading-tight">Quem está usando este celular?</h2>
           <p className="text-sm text-[var(--muted)] mb-3">Seu nome aparece nos registros que você fizer.</p>
-          <div className="flex flex-wrap gap-2">
-            {["Mãe", "Pai", "Avó", "Avô", "Babá"].map((w) => (
-              <button key={w} type="button" onClick={() => app.setPrefs({ who: w, whoAsked: true })} className="chip">
-                {w}
+          <WhoPicker
+            value=""
+            onPick={(n) => app.setPrefs({ who: n, whoAsked: true })}
+            extra={
+              <button type="button" onClick={() => app.setPrefs({ whoAsked: true })} className="chip">
+                Agora não
               </button>
-            ))}
-            <button type="button" onClick={() => go("config")} className="chip">Outro nome…</button>
-            <button type="button" onClick={() => app.setPrefs({ whoAsked: true })} className="chip">Agora não</button>
-          </div>
+            }
+          />
         </section>
       )}
 

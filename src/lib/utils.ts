@@ -134,3 +134,29 @@ export function resizeImage(file: File, maxSize = 640, quality = 0.72): Promise<
     reader.readAsDataURL(file);
   });
 }
+
+/** Foto de perfil: recorta o centro em quadrado e reduz (JPEG pequeno). */
+export function resizeSquare(file: File, size = 256, quality = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Não foi possível ler a foto"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Foto inválida"));
+      img.onload = () => {
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Sem suporte a canvas"));
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = String(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}

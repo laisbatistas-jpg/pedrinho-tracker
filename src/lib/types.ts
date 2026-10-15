@@ -147,6 +147,7 @@ export const DEFAULT_CARD: EmergencyCard = {
 
 export type Settings = {
   name: string;
+  photo?: string; // foto de perfil do bebê (pequena, quadrada)
   birthDate: string; // YYYY-MM-DD ou ""
   sex: "menino" | "menina";
   alertFeedHours: number; // 0 = desligado

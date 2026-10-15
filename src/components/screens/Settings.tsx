@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
-import { Chips, Field, ScreenHeader } from "@/components/ui";
+import { Chips, Field, ScreenHeader, WhoPicker } from "@/components/ui";
+import { roleOf } from "@/lib/profiles";
 import type { ScreenProps } from "@/lib/nav";
 import type { Settings } from "@/lib/types";
-import { formatClock } from "@/lib/utils";
+import { formatClock, resizeSquare } from "@/lib/utils";
 
 function Toggle({ on, onChange, label, hint }: { on: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
   return (
@@ -43,7 +44,8 @@ export function SettingsScreen({ app, go }: ScreenProps) {
   const [key, setKey] = useState(prefs.syncKey);
   const [family, setFamily] = useState(prefs.familyCode);
   const [msg, setMsg] = useState("");
-  const [who, setWho] = useState(prefs.who);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const photoRef = useRef<HTMLInputElement>(null);
   const [usedChars, setUsedChars] = useState(0);
   useEffect(() => {
     try {
@@ -100,6 +102,55 @@ export function SettingsScreen({ app, go }: ScreenProps) {
 
       <section className="glass p-5">
         <h2 className="font-semibold text-lg mb-4">Bebê</h2>
+        <div className="flex items-center gap-4 mb-5">
+          <span className="w-20 h-20 rounded-full overflow-hidden grid place-items-center text-4xl bg-gradient-to-br from-violet-500/30 to-indigo-900/60 border-2 border-[var(--violet-deep)] shrink-0">
+            {settings.photo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={settings.photo} alt={`Foto de ${settings.name}`} className="w-full h-full object-cover" />
+            ) : (
+              "👶"
+            )}
+          </span>
+          <div className="flex-1">
+            <button
+              type="button"
+              onClick={() => photoRef.current?.click()}
+              className="btn-ghost w-full h-11 rounded-2xl font-semibold flex items-center justify-center gap-2"
+            >
+              <Icon name="camera" className="w-4 h-4" /> {photoBusy ? "Preparando…" : settings.photo ? "Trocar foto" : "Adicionar foto"}
+            </button>
+            {settings.photo && (
+              <button
+                type="button"
+                onClick={() => app.upsert<Settings>("settings", "main", { ...settings, photo: undefined })}
+                className="w-full mt-2 text-sm text-[var(--muted)]"
+              >
+                Remover foto
+              </button>
+            )}
+            <input
+              ref={photoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              aria-label="Foto de perfil"
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (!f) return;
+                setPhotoBusy(true);
+                try {
+                  patch({ photo: await resizeSquare(f) });
+                  flashSaved();
+                } catch {
+                  setMsg("Não consegui usar essa foto. Tente outra.");
+                } finally {
+                  setPhotoBusy(false);
+                }
+              }}
+            />
+          </div>
+        </div>
         <Field label="Nome">
           <input
             className="field"
@@ -144,30 +195,15 @@ export function SettingsScreen({ app, go }: ScreenProps) {
       <section className="glass p-5">
         <h2 className="font-semibold text-lg mb-1">Quem usa este celular?</h2>
         <p className="text-sm text-[var(--muted)] mb-4">
-          Seu nome aparece em cada registro que você fizer (“por Samuel”). Assim a família sabe quem deu o remédio ou trocou a fralda.
+          Cada pessoa escolhe o próprio perfil no seu celular. O nome aparece nos registros (“por Laís”), assim todo mundo sabe quem deu o remédio ou trocou a fralda.
         </p>
-        <Field label="Seu nome" group>
-          <div className="flex flex-wrap gap-2 mb-3">
-            {["Mãe", "Pai", "Avó", "Avô", "Babá"].map((w) => (
-              <button
-                key={w}
-                type="button"
-                onClick={() => app.setPrefs({ who: w, whoAsked: true })}
-                className={`chip ${prefs.who === w ? "chip-on" : ""}`}
-              >
-                {w}
-              </button>
-            ))}
-          </div>
-          <input
-            className="field"
-            value={who}
-            onChange={(e) => setWho(e.target.value)}
-            onBlur={() => app.setPrefs({ who: who.trim(), whoAsked: true })}
-            placeholder="Ou escreva o nome"
-            aria-label="Seu nome"
-          />
-        </Field>
+        <WhoPicker value={prefs.who} onPick={(n) => app.setPrefs({ who: n, whoAsked: true })} />
+        {prefs.who && (
+          <p className="text-sm text-emerald-300 mt-3">
+            Perfil deste celular: {prefs.who}
+            {roleOf(prefs.who) ? ` (${roleOf(prefs.who)})` : ""}
+          </p>
+        )}
       </section>
 
       <section className="glass p-5 space-y-4">

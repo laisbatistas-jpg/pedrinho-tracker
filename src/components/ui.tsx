@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Icon, type IconName } from "./Icon";
 import type { BabyEvent, DiaperKind, EventType, Side } from "@/lib/types";
 import type { Alert } from "@/lib/app";
+import { OTHER_ROLES, PROFILES } from "@/lib/profiles";
 import {
   diaperLabel,
   formatClock,
@@ -700,5 +701,75 @@ export function PhotoField({
       {err && <p className="text-sm text-amber-300 mt-2">{err}</p>}
       <p className="text-xs text-[var(--muted)] mt-2">Até {max} fotos. Elas ficam reduzidas para caber no celular.</p>
     </Field>
+  );
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Perfil de quem usa o aparelho                                       */
+/* ------------------------------------------------------------------ */
+
+export function Avatar({ name, className = "w-10 h-10 text-base" }: { name: string; className?: string }) {
+  return (
+    <span className={`icon-badge font-bold ${className}`} aria-hidden="true">
+      {(name.trim()[0] ?? "?").toUpperCase()}
+    </span>
+  );
+}
+
+/** Escolha de perfil: Laís (Mãe), Samuel (Pai) ou outro cuidador. */
+export function WhoPicker({
+  value,
+  onPick,
+  extra,
+}: {
+  value: string;
+  onPick: (name: string) => void;
+  extra?: ReactNode;
+}) {
+  const [custom, setCustom] = useState(
+    value && !PROFILES.some((p) => p.name === value) && !OTHER_ROLES.includes(value) ? value : ""
+  );
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {PROFILES.map((p) => {
+          const on = value === p.name;
+          return (
+            <button
+              key={p.name}
+              type="button"
+              aria-pressed={on}
+              onClick={() => onPick(p.name)}
+              className={`flex items-center gap-3 p-3 rounded-2xl border text-left ${
+                on ? "bg-[rgba(124,58,237,0.3)] border-[var(--violet)]" : "bg-white/5 border-[var(--stroke)]"
+              }`}
+            >
+              <Avatar name={p.name} className="w-11 h-11 text-lg" />
+              <span>
+                <span className="block font-semibold leading-tight">{p.name}</span>
+                <span className="block text-xs text-[var(--muted)]">{p.role}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {OTHER_ROLES.map((r) => (
+          <button key={r} type="button" onClick={() => onPick(r)} className={`chip ${value === r ? "chip-on" : ""}`}>
+            {r}
+          </button>
+        ))}
+        {extra}
+      </div>
+      <input
+        className="field"
+        value={custom}
+        onChange={(e) => setCustom(e.target.value)}
+        onBlur={() => custom.trim() && onPick(custom.trim())}
+        placeholder="Outro nome"
+        aria-label="Outro nome"
+      />
+    </div>
   );
 }

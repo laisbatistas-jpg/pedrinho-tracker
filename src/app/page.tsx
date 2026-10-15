@@ -84,9 +84,14 @@ export default function Home() {
         <button
           onClick={() => go("inicio")}
           aria-label="Ir para o início"
-          className="w-14 h-14 rounded-full grid place-items-center text-3xl bg-gradient-to-br from-violet-500/30 to-indigo-900/60 border-2 border-[var(--violet-deep)] shadow-[0_0_24px_-4px_rgba(124,58,237,0.7)]"
+          className="w-14 h-14 rounded-full overflow-hidden grid place-items-center text-3xl bg-gradient-to-br from-violet-500/30 to-indigo-900/60 border-2 border-[var(--violet-deep)] shadow-[0_0_24px_-4px_rgba(124,58,237,0.7)]"
         >
-          👶
+          {settings.photo ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={settings.photo} alt={`Foto de ${name}`} className="w-full h-full rounded-full object-cover" />
+          ) : (
+            "👶"
+          )}
         </button>
         <div className="min-w-0 flex-1">
           <h1 className="text-[1.65rem] font-bold leading-tight flex items-center gap-2">
@@ -95,6 +100,15 @@ export default function Home() {
           </h1>
           <p className="text-sm text-[var(--muted)] cap-first truncate">{subtitle}</p>
         </div>
+        {app.prefs.who && (
+          <button
+            onClick={() => go("config")}
+            aria-label={`Perfil: ${app.prefs.who}`}
+            className="icon-badge w-10 h-10 font-bold"
+          >
+            {app.prefs.who.trim()[0]?.toUpperCase()}
+          </button>
+        )}
         {app.syncConfigured && (
           <button
             onClick={() => go("config")}

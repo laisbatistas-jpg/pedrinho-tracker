@@ -162,14 +162,34 @@ export function icsUrl(a: Appointment, babyName: string): string {
   return `/api/ics?${q.toString()}`;
 }
 
+/** Safari do iPhone/iPad (e não Chrome, Firefox ou Edge, que no iOS têm outro comportamento). */
+const isIosSafari = () =>
+  typeof navigator !== "undefined" &&
+  /iPhone|iPad|iPod/.test(navigator.userAgent) &&
+  !/CriOS|FxiOS|EdgiOS|OPiOS|GSA\//.test(navigator.userAgent);
+
+const isStandalone = () =>
+  typeof window !== "undefined" &&
+  ((navigator as Navigator & { standalone?: boolean }).standalone === true ||
+    window.matchMedia?.("(display-mode: standalone)").matches);
+
 /**
  * Adiciona ao Calendário do celular.
- * 1) Folha de compartilhar do iPhone (tem "Adicionar ao Calendário"; funciona no Safari e no Chrome).
- * 2) Se não houver, abre o link do lembrete (o Safari abre no Calendário).
- * 3) Último caso: baixa o arquivo.
+ * - Safari do iPhone: abre o link do lembrete, que o Safari mostra direto na tela "Adicionar ao Calendário".
+ *   (Se o app estiver instalado na Tela de Início, abre numa janela à parte para não sair do app.)
+ * - Outros navegadores: folha de compartilhar do celular, que tem "Adicionar ao Calendário".
+ * - Último caso: baixa o arquivo.
  */
 export async function addToCalendar(a: Appointment, babyName: string): Promise<void> {
   const text = buildIcs(a, babyName);
+
+  if (isIosSafari()) {
+    const url = icsUrl(a, babyName);
+    if (isStandalone()) window.open(url, "_blank");
+    else window.location.href = url;
+    return;
+  }
+
   try {
     const file = new File([text], "lembrete-pedrinho.ics", { type: "text/calendar" });
     if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
@@ -178,12 +198,6 @@ export async function addToCalendar(a: Appointment, babyName: string): Promise<v
     }
   } catch (e) {
     if (e instanceof DOMException && e.name === "AbortError") return; // a pessoa fechou a folha
-  }
-  try {
-    window.location.href = icsUrl(a, babyName);
-    return;
-  } catch {
-    /* tenta baixar */
   }
   const blob = new Blob([text], { type: "text/calendar;charset=utf-8" });
   const url = URL.createObjectURL(blob);
