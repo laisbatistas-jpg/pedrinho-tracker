@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Chips, Field, ScreenHeader, WhoPicker } from "@/components/ui";
 import { roleOf } from "@/lib/profiles";
+import { disablePush, enablePush, getPushState, sendTestPush, type PushState } from "@/lib/push";
 import type { ScreenProps } from "@/lib/nav";
 import type { Settings } from "@/lib/types";
 import { formatClock, resizeSquare } from "@/lib/utils";
@@ -46,6 +47,16 @@ export function SettingsScreen({ app, go }: ScreenProps) {
   const [msg, setMsg] = useState("");
   const [photoBusy, setPhotoBusy] = useState(false);
   const [customMin, setCustomMin] = useState("");
+  const [pushState, setPushState] = useState<PushState | "loading">("loading");
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushMsg, setPushMsg] = useState("");
+  useEffect(() => {
+    let alive = true;
+    void getPushState().then((st) => alive && setPushState(st));
+    return () => {
+      alive = false;
+    };
+  }, []);
   const photoRef = useRef<HTMLInputElement>(null);
   const [usedChars, setUsedChars] = useState(0);
   useEffect(() => {
@@ -275,6 +286,83 @@ export function SettingsScreen({ app, go }: ScreenProps) {
           label="Notificações do navegador"
           hint="Funcionam com o app aberto ou em segundo plano. Para avisos com o app fechado seria preciso um serviço extra."
         />
+      </section>
+
+      <section className="glass p-5">
+        <h2 className="font-semibold text-lg mb-1">Avisos no celular</h2>
+        <p className="text-sm text-[var(--muted)] mb-4">
+          Receba as notificações (hora da mamada, consultas e vacinas) <strong>mesmo com o app fechado</strong>. Cada pessoa ativa no próprio celular.
+        </p>
+        {!app.syncConfigured ? (
+          <p className="text-sm text-amber-200">Antes, ligue a sincronização (mais abaixo nesta tela). Os avisos usam o mesmo código da família.</p>
+        ) : pushState === "loading" ? (
+          <p className="text-sm text-[var(--muted)]">Verificando…</p>
+        ) : pushState === "need-install" ? (
+          <p className="text-sm text-amber-200">
+            No iPhone, primeiro adicione o app à Tela de Início: toque em <strong>Compartilhar</strong> e depois em <strong>Adicionar à Tela de Início</strong>.
+            Abra o app por esse ícone e volte aqui.
+          </p>
+        ) : pushState === "unsupported" ? (
+          <p className="text-sm text-amber-200">Este navegador não permite avisos com o app fechado.</p>
+        ) : pushState === "denied" ? (
+          <p className="text-sm text-amber-200">
+            As notificações estão bloqueadas. Libere em <strong>Ajustes do celular → Notificações → Pedrinho</strong> e tente de novo.
+          </p>
+        ) : pushState === "on" ? (
+          <div className="space-y-3">
+            <p className="text-sm text-emerald-300">Ativado neste celular ✓</p>
+            <button
+              type="button"
+              disabled={pushBusy}
+              onClick={async () => {
+                if (!app.syncCfg) return;
+                setPushBusy(true);
+                setPushMsg(await sendTestPush(app.syncCfg).catch(() => "Não foi possível enviar o teste."));
+                setPushBusy(false);
+              }}
+              className="btn-ghost w-full h-12 rounded-2xl font-semibold"
+            >
+              Enviar aviso de teste
+            </button>
+            <button
+              type="button"
+              disabled={pushBusy}
+              onClick={async () => {
+                setPushBusy(true);
+                await disablePush(app.syncCfg);
+                setPushState(await getPushState());
+                setPushMsg("");
+                setPushBusy(false);
+              }}
+              className="w-full h-11 rounded-2xl font-semibold border border-[var(--stroke)] text-[var(--muted)]"
+            >
+              Desativar neste celular
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={pushBusy}
+            onClick={async () => {
+              if (!app.syncCfg) return;
+              setPushBusy(true);
+              setPushMsg("");
+              try {
+                await enablePush(app.syncCfg, prefs.who);
+                setPushState(await getPushState());
+                setPushMsg("Pronto! Toque em “Enviar aviso de teste” para conferir.");
+              } catch (e) {
+                setPushMsg(e instanceof Error ? e.message : "Não foi possível ativar.");
+                setPushState(await getPushState());
+              }
+              setPushBusy(false);
+            }}
+            className="btn-grad w-full h-14 rounded-2xl font-semibold text-lg"
+          >
+            {pushBusy ? "Ativando…" : "Ativar avisos neste celular"}
+          </button>
+        )}
+        {pushMsg && <p className="text-sm mt-3 text-[var(--muted)]">{pushMsg}</p>}
       </section>
 
       <section className="glass p-5 space-y-4">

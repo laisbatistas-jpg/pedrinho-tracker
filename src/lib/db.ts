@@ -364,6 +364,7 @@ export function useDb() {
     exportAll,
     importAll,
     syncConfigured: cfg !== null,
+    syncCfg: cfg,
     envConfigured: Boolean(ENV_URL && ENV_KEY),
     syncStatus: status,
     syncError,

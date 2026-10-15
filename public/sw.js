@@ -59,3 +59,22 @@ self.addEventListener("notificationclick", (event) => {
     })()
   );
 });
+
+// Aviso enviado pelo servidor (chega mesmo com o app fechado).
+self.addEventListener("push", (event) => {
+  let d = {};
+  try {
+    d = event.data ? event.data.json() : {};
+  } catch (e) {
+    d = { body: event.data ? event.data.text() : "" };
+  }
+  event.waitUntil(
+    self.registration.showNotification(d.title || "Pedrinho Tracker", {
+      body: d.body || "",
+      tag: d.tag || undefined,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { url: d.url || "/" },
+    })
+  );
+});

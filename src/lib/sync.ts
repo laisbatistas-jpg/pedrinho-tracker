@@ -15,7 +15,7 @@ export type RemoteRow = {
   deleted: boolean;
 };
 
-async function rpc<T>(cfg: SyncConfig, fn: string, body: unknown): Promise<T | null> {
+export async function rpc<T>(cfg: SyncConfig, fn: string, body: unknown): Promise<T | null> {
   const res = await fetch(`${cfg.url.replace(/\/+$/, "")}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: {
