@@ -8,10 +8,10 @@ export type ServerEnv = {
 };
 
 export function readEnv(): ServerEnv | null {
-  const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/+$/, "");
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-  const vapidPrivate = process.env.VAPID_PRIVATE_KEY || "";
-  const cronSecret = process.env.CRON_SECRET || "";
+  const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const vapidPrivate = (process.env.VAPID_PRIVATE_KEY || "").trim();
+  const cronSecret = (process.env.CRON_SECRET || "").trim();
   if (!url || !serviceKey || !vapidPrivate || !cronSecret) return null;
   return { url, serviceKey, vapidPrivate, cronSecret };
 }

@@ -20,11 +20,25 @@ export async function GET(request: Request) {
   if (!env) return Response.json({ ok: false, error: "faltam variáveis", missing: missingEnv() }, { status: 500 });
   if (request.headers.get("x-cron-secret") !== env.cronSecret) return new Response("não autorizado", { status: 401 });
 
-  const wp = await loadWebPush();
-  wp.setVapidDetails("https://pedrinho-tracker.vercel.app", PUSH_PUBLIC_KEY, env.vapidPrivate);
+  let wp: Awaited<ReturnType<typeof loadWebPush>>;
+  try {
+    wp = await loadWebPush();
+  } catch (e) {
+    return Response.json({ ok: false, etapa: "carregar web-push", error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
+  try {
+    wp.setVapidDetails("https://pedrinho-tracker.vercel.app", PUSH_PUBLIC_KEY, env.vapidPrivate);
+  } catch (e) {
+    return Response.json({ ok: false, etapa: "chave VAPID", error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
 
   const now = Date.now();
-  const subs = await rest<Sub[]>(env, "push_subs?select=family,endpoint,p256dh,auth,tz");
+  let subs: Sub[];
+  try {
+    subs = await rest<Sub[]>(env, "push_subs?select=family,endpoint,p256dh,auth,tz");
+  } catch (e) {
+    return Response.json({ ok: false, etapa: "ler celulares no Supabase", error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
   const byFamily = new Map<string, Sub[]>();
   for (const s of subs) byFamily.set(s.family, [...(byFamily.get(s.family) ?? []), s]);
 
