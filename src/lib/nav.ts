@@ -11,6 +11,7 @@ export type Screen =
   | "crescimento"
   | "saude"
   | "vacinas"
+  | "consultas"
   | "marcos"
   | "sons"
   | "relatorio"

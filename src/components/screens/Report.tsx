@@ -4,14 +4,15 @@ import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Chips, ScreenHeader, WeekChart } from "@/components/ui";
 import type { ScreenProps } from "@/lib/nav";
-import { METRIC_INFO } from "@/lib/reference";
+import { placeLine, visitTitle } from "@/lib/agenda";
+import { METRIC_INFO, VACCINES } from "@/lib/reference";
 import {
   DAY, WEEKDAY_LETTER, ageLabel, fmtNum, formatClock, formatDate, formatDur, isFeed, startOfDay,
 } from "@/lib/utils";
 
 export function ReportScreen({ app, go }: ScreenProps) {
   const [days, setDays] = useState(7);
-  const { settings, events, growth, health, vaccines, now } = app;
+  const { settings, events, growth, health, vaccines, visits, now } = app;
   const nowTs = now || Date.now();
 
   const data = useMemo(() => {
@@ -44,6 +45,7 @@ export function ReportScreen({ app, go }: ScreenProps) {
   const symptoms = health.filter((h) => h.kind === "sintoma" && h.timestamp >= data.from);
   const lastGrowth = growth[growth.length - 1];
   const doneVaccines = Object.entries(vaccines).filter(([, v]) => v.doneAt);
+  const doneVisits = visits.filter((v) => v.status === "realizada" && v.timestamp >= data.from - 0).sort((x, y) => y.timestamp - x.timestamp);
 
   return (
     <div className="pt-2">
@@ -171,9 +173,51 @@ export function ReportScreen({ app, go }: ScreenProps) {
         {doneVaccines.length > 0 && (
           <section className="glass p-5">
             <h2 className="font-semibold text-lg mb-2">Vacinas registradas</h2>
-            <p className="text-sm">
-              {doneVaccines.length} {doneVaccines.length === 1 ? "vacina marcada" : "vacinas marcadas"} como aplicada{doneVaccines.length === 1 ? "" : "s"} no app.
-            </p>
+            <table>
+              <tbody>
+                {doneVaccines
+                  .sort((x, y) => (x[1].doneAt ?? 0) - (y[1].doneAt ?? 0))
+                  .map(([k, r]) => {
+                    const def = VACCINES.find((d) => d.key === k);
+                    const react = r.reactions && r.reactions.length ? r.reactions.join(", ") : "";
+                    return (
+                      <tr key={k}>
+                        <td>{formatDate(r.doneAt ?? 0)}</td>
+                        <td>
+                          {def ? `${def.name} (${def.dose})` : k}
+                          {placeLine(r) ? ` — ${placeLine(r)}` : ""}
+                          {r.applier ? ` — ${r.applier}` : ""}
+                          {r.batch ? ` — lote ${r.batch}` : ""}
+                          {react ? ` — reação: ${react.toLowerCase()}` : ""}
+                          {r.reactionNote ? ` (${r.reactionNote})` : ""}
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </section>
+        )}
+
+        {doneVisits.length > 0 && (
+          <section className="glass p-5">
+            <h2 className="font-semibold text-lg mb-2">Consultas no período</h2>
+            <table>
+              <tbody>
+                {doneVisits.map((v) => (
+                  <tr key={v.id}>
+                    <td>{formatDate(v.timestamp)}</td>
+                    <td>
+                      {visitTitle(v.kind)}
+                      {v.doctor ? ` — ${v.doctor}` : ""}
+                      {placeLine(v) ? ` — ${placeLine(v)}` : ""}
+                      {v.note ? `. ${v.note}` : ""}
+                      {v.guidance ? ` Orientações: ${v.guidance}` : ""}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </section>
         )}
 

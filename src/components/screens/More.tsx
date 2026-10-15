@@ -8,6 +8,7 @@ const ITEMS: { id: Screen; label: string; hint: string; icon: IconName }[] = [
   { id: "historico", label: "Histórico", hint: "Dias anteriores", icon: "calendar" },
   { id: "crescimento", label: "Crescimento", hint: "Peso, altura e curva OMS", icon: "trend" },
   { id: "saude", label: "Saúde", hint: "Remédios, febre e humor", icon: "pill" },
+  { id: "consultas", label: "Consultas", hint: "Agenda do pediatra e como foi", icon: "stethoscope" },
   { id: "vacinas", label: "Vacinas", hint: "Calendário do 1º ano", icon: "syringe" },
   { id: "marcos", label: "Marcos", hint: "Primeiras vezes e fotos", icon: "star" },
   { id: "sons", label: "Sons de ninar", hint: "Ruído branco e chuva", icon: "music" },

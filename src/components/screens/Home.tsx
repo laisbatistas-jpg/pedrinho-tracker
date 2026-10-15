@@ -7,7 +7,8 @@ import { AlertList, EventForm, MiniBars, Stat, Timeline } from "@/components/ui"
 import { BottleSheet, SideButton } from "./Feed";
 import type { ScreenProps } from "@/lib/nav";
 import type { BabyEvent } from "@/lib/types";
-import { formatClock, formatDur, formatTime, sideLabel } from "@/lib/utils";
+import { countdownLabel, listAppointments, placeLine } from "@/lib/agenda";
+import { DAY, formatClock, formatDate, formatDur, formatTime, sideLabel } from "@/lib/utils";
 
 export function HomeScreen({ app, go }: ScreenProps) {
   const {
@@ -15,6 +16,9 @@ export function HomeScreen({ app, go }: ScreenProps) {
     feedsToday, bottleMlToday, sleepToday, totalSleepSec, longestSleepSec, diapersToday, week, todayEvents,
   } = app;
 
+  const agenda = listAppointments(app.visits, app.vaccines)
+    .filter((a) => a.timestamp >= (now || 0) && a.timestamp <= (now || 0) + 30 * DAY)
+    .slice(0, 3);
   const [bottleOpen, setBottleOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<BabyEvent | null>(null);
@@ -22,6 +26,37 @@ export function HomeScreen({ app, go }: ScreenProps) {
   return (
     <div className="fade-in space-y-4">
       <AlertList alerts={app.alerts} />
+
+      {agenda.length > 0 && (
+        <section className="glass p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-lg">Próximos compromissos</h2>
+            <button onClick={() => go("consultas")} className="text-xs font-semibold text-[var(--violet)]">Ver agenda →</button>
+          </div>
+          <ul className="space-y-3">
+            {agenda.map((a) => (
+              <li key={a.key}>
+                <button
+                  onClick={() => go(a.source === "vaccine" ? "vacinas" : "consultas")}
+                  className="w-full flex items-center gap-3 text-left"
+                >
+                  <span className="icon-badge w-10 h-10">
+                    <Icon name={a.source === "vaccine" ? "syringe" : "stethoscope"} className="w-5 h-5" />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block font-semibold leading-tight truncate">{a.title}</span>
+                    <span className="block text-xs text-[var(--muted)] truncate">
+                      {formatDate(a.timestamp).slice(0, 5)} às {formatClock(a.timestamp)}
+                      {placeLine(a) ? ` • ${placeLine(a)}` : ""}
+                    </span>
+                  </span>
+                  <span className="text-xs font-semibold text-[var(--violet)] whitespace-nowrap">{countdownLabel(a.timestamp, now || a.timestamp - 1)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {timer && (
         <button

@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDb } from "./db";
 import type { BabyEvent, DiaperKind, Side, Timer } from "./types";
+import { alertFor, listAppointments, stageFor } from "./agenda";
 import { wakeWindowMinutes } from "./reference";
 import {
   DAY,
   WEEKDAY_LETTER,
   ageInMonths,
   formatClock,
+  formatDate,
   formatDur,
   genId,
   isFeed,
@@ -31,7 +33,7 @@ const eventEnd = (e: BabyEvent) => e.endTimestamp ?? e.timestamp + (e.duration ?
 
 export function useApp() {
   const db = useDb();
-  const { events, settings, health, timer, upsert, remove, prefs } = db;
+  const { events, settings, health, visits, vaccines, timer, upsert, remove, prefs } = db;
   const [now, setNow] = useState(0);
 
   useEffect(() => {
@@ -266,6 +268,29 @@ export function useApp() {
       }
     });
 
+    // consultas e vacinas agendadas: 7, 3 e 1 dia antes, e às 6h do próprio dia
+    for (const ap of listAppointments(visits, vaccines)) {
+      const stage = stageFor(ap.timestamp, nowTs);
+      if (stage) {
+        const t = alertFor(ap, stage, nowTs);
+        list.push({
+          id: ap.key,
+          episode: stage,
+          tone: stage === "today" ? "warn" : "info",
+          title: t.title,
+          text: t.text,
+        });
+      } else if (ap.timestamp < nowTs - 2 * 3600000 && ap.timestamp > nowTs - 14 * DAY) {
+        list.push({
+          id: ap.key,
+          episode: "done",
+          tone: "info",
+          title: ap.source === "vaccine" ? "A vacina foi aplicada?" : "Como foi a consulta?",
+          text: `${ap.title} de ${formatDate(ap.timestamp).slice(0, 5)}: registre como foi em Mais → ${ap.source === "vaccine" ? "Vacinas" : "Consultas"}.`,
+        });
+      }
+    }
+
     // febre recente
     const temp = health.find((h) => h.kind === "temperatura" && nowTs - h.timestamp < 6 * 3600000);
     if (temp && (temp.tempC ?? 0) >= 37.8) {
@@ -278,21 +303,39 @@ export function useApp() {
       });
     }
     return list;
-  }, [derived, settings.alertFeedHours, settings.alertSleepHours, timer, elapsed, health, nowTs]);
+  }, [derived, settings.alertFeedHours, settings.alertSleepHours, timer, elapsed, health, visits, vaccines, nowTs]);
 
   /* ================= notificações do navegador ================= */
 
-  const notified = useRef<Set<string>>(new Set());
+  // lembra o que já foi avisado (mesmo fechando o app), para não repetir o mesmo aviso
+  const notified = useRef<Set<string> | null>(null);
   useEffect(() => {
     if (!prefs.notify || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    if (!notified.current) {
+      try {
+        notified.current = new Set<string>(JSON.parse(localStorage.getItem("pedrinho-notified-v1") || "[]"));
+      } catch {
+        notified.current = new Set<string>();
+      }
+    }
+    const seen = notified.current;
+    let changed = false;
     for (const a of alerts) {
       const key = `${a.id}:${a.episode}`;
-      if (notified.current.has(key)) continue;
-      notified.current.add(key);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      changed = true;
       try {
         new Notification(a.title, { body: a.text, tag: key });
       } catch {
         /* alguns aparelhos não permitem */
+      }
+    }
+    if (changed) {
+      try {
+        localStorage.setItem("pedrinho-notified-v1", JSON.stringify(Array.from(seen).slice(-300)));
+      } catch {
+        /* sem armazenamento */
       }
     }
   }, [alerts, prefs.notify]);

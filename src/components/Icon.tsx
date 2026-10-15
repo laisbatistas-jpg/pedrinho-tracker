@@ -4,7 +4,7 @@ export type IconName =
   | "home" | "feed" | "bottle" | "moon" | "sun" | "diaper" | "chart" | "clock" | "heart" | "swap"
   | "check" | "drop" | "target" | "play" | "plus" | "edit" | "trash" | "close" | "back" | "chevron"
   | "trend" | "pill" | "syringe" | "star" | "music" | "file" | "sliders" | "grid" | "calendar"
-  | "thermo" | "camera" | "bell" | "cloud" | "smile" | "download" | "upload" | "alert" | "stop";
+  | "thermo" | "camera" | "bell" | "cloud" | "smile" | "download" | "upload" | "alert" | "stop" | "stethoscope";
 
 const FILLED: IconName[] = ["heart", "play", "stop"];
 
@@ -46,6 +46,7 @@ const PATHS: Record<IconName, ReactNode> = {
   smile: (<><circle cx="12" cy="12" r="8.500" /><path d="M8.500 14a4.500 4.500 0 0 0 7 0M9 9.500h.01M15 9.500h.01" /></>),
   download: (<path d="M12 4v11M7 10l5 5 5-5M5 20h14" />),
   upload: (<path d="M12 20V9M7 14l5-5 5 5M5 4h14" />),
+  stethoscope: (<><path d="M6 3v6a4 4 0 0 0 8 0V3" /><path d="M5 3h2M13 3h2" /><path d="M10 13v2a5 5 0 0 0 10 0v-2" /><circle cx="20" cy="11" r="2" /></>),
   alert: (<><path d="M12 3.500 21.500 20h-19z" /><path d="M12 10v4.500M12 17.200h.01" /></>),
 };
 

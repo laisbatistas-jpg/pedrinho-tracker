@@ -48,9 +48,48 @@ export type HealthEntry = {
   note?: string;
 };
 
+export const VACCINE_REACTIONS = [
+  "Febre",
+  "Vermelhidão no local",
+  "Inchaço no local",
+  "Irritabilidade",
+  "Muito sono",
+  "Choro prolongado",
+  "Sem reação",
+] as const;
+
 export type VaccineRecord = {
-  doneAt: number | null;
+  doneAt: number | null; // quando foi aplicada
+  scheduledAt?: number | null; // quando está agendada (ainda não aplicada)
+  place?: string; // onde (posto, clínica)
+  address?: string; // endereço do local
+  applier?: string; // quem aplicou ou a médica
+  batch?: string; // lote
+  reactions?: string[]; // sintomas depois da vacina
+  reactionNote?: string;
   note?: string;
+};
+
+export type VisitKind = "pediatra" | "retorno" | "exame" | "vacina" | "especialista" | "outro";
+export type VisitStatus = "agendada" | "realizada" | "cancelada";
+export type VisitOutcome = "tudo_bem" | "atencao" | "retorno";
+
+/** Consulta ou compromisso de saúde (agendado ou já realizado). */
+export type Visit = {
+  id: string;
+  kind: VisitKind;
+  status: VisitStatus;
+  timestamp: number; // data e hora marcadas
+  doctor?: string;
+  place?: string;
+  address?: string; // endereço do local
+  reason?: string; // motivo / o que perguntar
+  outcome?: VisitOutcome; // como foi
+  note?: string; // como foi (texto livre)
+  guidance?: string; // orientações / receitas
+  weightKg?: number;
+  heightCm?: number;
+  headCm?: number;
 };
 
 export type Milestone = {
@@ -96,7 +135,7 @@ export const DEFAULT_PREFS: Prefs = {
   lastPull: 0,
 };
 
-export type Kind = "event" | "growth" | "health" | "vaccine" | "milestone" | "settings" | "timer";
+export type Kind = "event" | "growth" | "health" | "vaccine" | "visit" | "milestone" | "settings" | "timer";
 
 export type Rec = {
   id: string;

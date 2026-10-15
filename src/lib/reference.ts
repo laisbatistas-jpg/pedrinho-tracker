@@ -136,3 +136,15 @@ export const MILESTONE_SUGGESTIONS = [
   "Primeiras palavras",
   "Primeiros passos",
 ];
+
+export const VISIT_KINDS: { value: import("./types").VisitKind; label: string }[] = [
+  { value: "pediatra", label: "Pediatra" },
+  { value: "retorno", label: "Retorno" },
+  { value: "exame", label: "Exame" },
+  { value: "vacina", label: "Vacina" },
+  { value: "especialista", label: "Especialista" },
+  { value: "outro", label: "Outro" },
+];
+
+export const visitKindLabel = (k: import("./types").VisitKind) =>
+  VISIT_KINDS.find((x) => x.value === k)?.label ?? "Consulta";

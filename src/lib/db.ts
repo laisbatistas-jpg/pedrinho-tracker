@@ -15,6 +15,7 @@ import {
   type SyncStatus,
   type Timer,
   type VaccineRecord,
+  type Visit,
 } from "./types";
 import { pullRows, pushRows, type SyncConfig } from "./sync";
 
@@ -319,6 +320,9 @@ export function useDb() {
     const milestones = live("milestone")
       .map((r) => r.data as Milestone)
       .sort(newestFirst);
+    const visits = live("visit")
+      .map((r) => r.data as Visit)
+      .sort((a, b) => a.timestamp - b.timestamp || a.id.localeCompare(b.id));
     const vaccines: Record<string, VaccineRecord> = {};
     live("vaccine").forEach((r) => {
       vaccines[r.id] = r.data as VaccineRecord;
@@ -331,7 +335,7 @@ export function useDb() {
     const timerRec = recs[keyOf("timer", "main")];
     const timer: Timer["active"] = timerRec && !timerRec.deleted ? (timerRec.data as Timer).active : null;
 
-    return { events, growth, health, milestones, vaccines, settings, timer };
+    return { events, growth, health, milestones, vaccines, visits, settings, timer };
   }, [recs]);
 
   return {
