@@ -1,330 +1,149 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Icon, type IconName } from "@/components/Icon";
+import { HomeScreen } from "@/components/screens/Home";
+import { FeedScreen } from "@/components/screens/Feed";
+import { SleepScreen } from "@/components/screens/Sleep";
+import { DiapersScreen } from "@/components/screens/Diapers";
+import { MoreScreen } from "@/components/screens/More";
+import { StatsScreen } from "@/components/screens/Stats";
+import { HistoryScreen } from "@/components/screens/History";
+import { GrowthScreen } from "@/components/screens/Growth";
+import { HealthScreen } from "@/components/screens/Health";
+import { VaccinesScreen } from "@/components/screens/Vaccines";
+import { MilestonesScreen } from "@/components/screens/Milestones";
+import { SoundsScreen } from "@/components/screens/Sounds";
+import { ReportScreen } from "@/components/screens/Report";
+import { SettingsScreen } from "@/components/screens/Settings";
+import { useApp } from "@/lib/app";
+import type { Screen } from "@/lib/nav";
+import { ageLabel, formatDayLong, formatDayShort } from "@/lib/utils";
 
-type EventType = "amamentacao" | "sono" | "fralda";
+const TABS: { id: Screen; label: string; icon: IconName }[] = [
+  { id: "inicio", label: "Início", icon: "home" },
+  { id: "amamentacao", label: "Mamada", icon: "feed" },
+  { id: "sono", label: "Sono", icon: "moon" },
+  { id: "fraldas", label: "Fraldas", icon: "diaper" },
+  { id: "mais", label: "Mais", icon: "grid" },
+];
 
-type Event = {
-  id: string;
-  type: EventType;
-  side?: "esquerdo" | "direito";
-  duration?: number;
-  diaper?: "molhada" | "suja" | "mista";
-  timestamp: number;
-  endTimestamp?: number;
-};
+// telas que pertencem à aba "Mais"
+const MORE_SCREENS: Screen[] = [
+  "mais", "stats", "historico", "crescimento", "saude", "vacinas", "marcos", "sons", "relatorio", "config",
+];
 
 export default function Home() {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [activeTab, setActiveTab] = useState<"inicio" | "amamentacao" | "sono" | "fraldas" | "stats">("inicio");
-  const [timer, setTimer] = useState<{ type: "amamentacao" | "sono"; side?: "esquerdo" | "direito"; start: number } | null>(null);
-  const [now, setNow] = useState(0);
+  const app = useApp();
+  const [screen, setScreen] = useState<Screen>("inicio");
+  const [restored, setRestored] = useState(false);
 
+  const go = (s: Screen) => {
+    setScreen(s);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+  };
+
+  // ao abrir o app com um cronômetro rodando, vai direto para ele
   useEffect(() => {
-    setNow(Date.now());
-    const saved = localStorage.getItem("pedrinho-events-v2");
-    if (saved) setEvents(JSON.parse(saved));
-  }, []);
+    if (!app.ready || restored) return;
+    setRestored(true);
+    if (app.timer) setScreen(app.timer.type === "sono" ? "sono" : "amamentacao");
+  }, [app.ready, app.timer, restored]);
 
+  // modo noturno
   useEffect(() => {
-    localStorage.setItem("pedrinho-events-v2", JSON.stringify(events));
-  }, [events]);
+    document.documentElement.classList.toggle("night", app.prefs.nightMode);
+  }, [app.prefs.nightMode]);
 
-  useEffect(() => {
-    const i = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(i);
-  }, []);
+  if (!app.ready) {
+    return (
+      <div className="min-h-dvh grid place-items-center">
+        <span className="pulse-dot" aria-label="Carregando" />
+      </div>
+    );
+  }
 
-  const formatTime = (s: number) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${m.toString().padStart(2, "0")}:${sec.toString().padStart(2, "0")}`;
-  };
+  const { settings, timer, now } = app;
+  const name = settings.name || "Pedrinho";
+  const age = settings.birthDate && now ? ageLabel(settings.birthDate, now) : "";
+  const subtitle =
+    timer?.type === "sono"
+      ? `Shhh… ${name} está dormindo`
+      : timer?.type === "amamentacao"
+        ? "Mamando agora"
+        : [age, now ? (age ? formatDayShort(now) : formatDayLong(now)) : ""].filter(Boolean).join(" • ");
 
-  const startFeed = (side: "esquerdo" | "direito") => {
-    setTimer({ type: "amamentacao", side, start: Date.now() });
-    setActiveTab("amamentacao");
-  };
-
-  const stopFeed = () => {
-    if (!timer || timer.type !== "amamentacao") return;
-    const duration = Math.floor((Date.now() - timer.start) / 1000);
-    const newEvent: Event = {
-      id: Date.now().toString(),
-      type: "amamentacao",
-      side: timer.side,
-      duration,
-      timestamp: timer.start,
-      endTimestamp: Date.now(),
-    };
-    setEvents((prev) => [newEvent, ...prev]);
-    setTimer(null);
-    setActiveTab("inicio");
-  };
-
-  const switchSide = () => {
-    if (!timer || timer.type !== "amamentacao") return;
-    setTimer({ ...timer, side: timer.side === "esquerdo" ? "direito" : "esquerdo" });
-  };
-
-  const startSleep = () => {
-    setTimer({ type: "sono", start: Date.now() });
-    setActiveTab("sono");
-  };
-
-  const stopSleep = () => {
-    if (!timer || timer.type !== "sono") return;
-    const duration = Math.floor((Date.now() - timer.start) / 1000);
-    const newEvent: Event = {
-      id: Date.now().toString(),
-      type: "sono",
-      duration,
-      timestamp: timer.start,
-      endTimestamp: Date.now(),
-    };
-    setEvents((prev) => [newEvent, ...prev]);
-    setTimer(null);
-    setActiveTab("inicio");
-  };
-
-  const addDiaper = (kind: "molhada" | "suja" | "mista") => {
-    const newEvent: Event = {
-      id: Date.now().toString(),
-      type: "fralda",
-      diaper: kind,
-      timestamp: Date.now(),
-    };
-    setEvents((prev) => [newEvent, ...prev]);
-  };
-
-  const todayEvents = events.filter(
-    (e) => new Date(e.timestamp).toDateString() === new Date().toDateString()
-  );
-
-  const feedsToday = todayEvents.filter((e) => e.type === "amamentacao");
-  const sleepToday = todayEvents.filter((e) => e.type === "sono");
-  const diapersToday = todayEvents.filter((e) => e.type === "fralda");
-
-  const lastFeed = feedsToday[0];
-  const totalSleepSec = sleepToday.reduce((acc, e) => acc + (e.duration || 0), 0);
-
-  const elapsed = timer && now > 0 ? Math.floor((now - timer.start) / 1000) : 0;
-
-  const avgFeedInterval = feedsToday.length >= 2
-    ? Math.round(
-        feedsToday.slice(0, -1).reduce((acc, e, i) => acc + (feedsToday[i].timestamp - feedsToday[i + 1].timestamp), 0) /
-          (feedsToday.length - 1) /
-          60000
-      )
-    : 120;
-
-  const nextFeedMin = lastFeed && now > 0 ? Math.max(0, avgFeedInterval - Math.floor((now - lastFeed.timestamp) / 60000)) : null;
+  const activeTab: Screen = MORE_SCREENS.includes(screen) ? "mais" : screen;
+  const props = { app, go };
 
   return (
-    <div className="max-w-md mx-auto min-h-screen bg-zinc-950 text-white flex flex-col">
-      <header className="p-5 flex items-center gap-3">
-        <div className="w-14 h-14 rounded-full bg-purple-900 flex items-center justify-center text-3xl">👶</div>
-        <div>
-          <h1 className="text-2xl font-bold">Pedrinho ❤️</h1>
-          <p className="text-purple-300 text-sm">Meu pequeno, meu maior amor</p>
+    <div className="max-w-md mx-auto min-h-dvh flex flex-col">
+      <header className="px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-3 flex items-center gap-3.5 no-print">
+        <button
+          onClick={() => go("inicio")}
+          aria-label="Ir para o início"
+          className="w-14 h-14 rounded-full grid place-items-center text-3xl bg-gradient-to-br from-violet-500/30 to-indigo-900/60 border-2 border-[var(--violet-deep)] shadow-[0_0_24px_-4px_rgba(124,58,237,0.7)]"
+        >
+          👶
+        </button>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-[1.65rem] font-bold leading-tight flex items-center gap-2">
+            <span className="grad-text">{name}</span>
+            <Icon name="heart" className="w-5 h-5 text-[var(--violet)]" />
+          </h1>
+          <p className="text-sm text-[var(--muted)] cap-first truncate">{subtitle}</p>
         </div>
+        {app.syncConfigured && (
+          <button
+            onClick={() => go("config")}
+            aria-label={`Sincronização: ${app.syncStatus}`}
+            className={`icon-badge w-10 h-10 ${app.syncStatus === "error" ? "!text-amber-300" : ""}`}
+          >
+            <Icon name="cloud" className="w-5 h-5" />
+          </button>
+        )}
       </header>
 
-      <main className="flex-1 px-4 pb-24 overflow-y-auto">
-        {activeTab === "inicio" && (
-          <>
-            <section className="bg-zinc-900/80 rounded-3xl p-5 border border-purple-900/50 mb-4">
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <span>🤱</span> Amamentação
-              </h2>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => startFeed("esquerdo")}
-                  className="h-28 rounded-2xl bg-pink-600 hover:bg-pink-500 font-semibold text-lg flex flex-col items-center justify-center"
-                >
-                  Esquerdo
-                </button>
-                <button
-                  onClick={() => startFeed("direito")}
-                  className="h-28 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-semibold text-lg flex flex-col items-center justify-center"
-                >
-                  Direito
-                </button>
-              </div>
-            </section>
-
-            <div className="space-y-3">
-              <div className="bg-zinc-900 rounded-2xl p-4">
-                <p className="text-purple-300 text-sm">Última mamada</p>
-                <p className="text-lg font-medium">
-                  {lastFeed
-                    ? `${formatTime(lastFeed.duration || 0)} • ${lastFeed.side === "esquerdo" ? "Esquerdo" : "Direito"}`
-                    : "Nenhuma ainda"}
-                </p>
-              </div>
-              <div className="bg-zinc-900 rounded-2xl p-4">
-                <p className="text-purple-300 text-sm">Próxima mamada</p>
-                <p className="text-lg font-medium">
-                  {nextFeedMin !== null ? `em ~${nextFeedMin} min` : "Registre algumas mamadas"}
-                </p>
-              </div>
-              <div className="bg-zinc-900 rounded-2xl p-4">
-                <p className="text-purple-300 text-sm">Sono hoje</p>
-                <p className="text-lg font-medium">{Math.floor(totalSleepSec / 60)} min</p>
-              </div>
-            </div>
-          </>
-        )}
-
-        {activeTab === "amamentacao" && (
-          <div className="text-center pt-8">
-            {timer?.type === "amamentacao" ? (
-              <>
-                <div className="text-7xl font-bold my-8">{formatTime(elapsed)}</div>
-                <p className="text-2xl text-purple-300 mb-2">
-                  Seio {timer.side === "esquerdo" ? "Esquerdo" : "Direito"}
-                </p>
-                <p className="text-purple-400 mb-10">em andamento</p>
-                <div className="space-y-3 px-4">
-                  <button
-                    onClick={switchSide}
-                    className="w-full py-4 rounded-2xl bg-zinc-800 border border-purple-700 font-medium"
-                  >
-                    Trocar para {timer.side === "esquerdo" ? "Direito" : "Esquerdo"}
-                  </button>
-                  <button
-                    onClick={stopFeed}
-                    className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 font-semibold text-lg"
-                  >
-                    Parar e Salvar
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="pt-20 text-center">
-                <p className="text-xl mb-6">Escolha o lado para começar</p>
-                <div className="grid grid-cols-2 gap-4 px-6">
-                  <button onClick={() => startFeed("esquerdo")} className="h-32 rounded-2xl bg-pink-600 text-lg font-semibold">
-                    Esquerdo
-                  </button>
-                  <button onClick={() => startFeed("direito")} className="h-32 rounded-2xl bg-emerald-600 text-lg font-semibold">
-                    Direito
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "sono" && (
-          <div className="text-center pt-8">
-            {timer?.type === "sono" ? (
-              <>
-                <div className="text-7xl font-bold my-8 text-purple-300">{formatTime(elapsed)}</div>
-                <p className="text-xl mb-10">Soneca em andamento</p>
-                <button
-                  onClick={stopSleep}
-                  className="w-full max-w-xs mx-auto py-4 rounded-2xl bg-purple-600 font-semibold text-lg"
-                >
-                  Acordou
-                </button>
-              </>
-            ) : (
-              <div className="pt-20">
-                <p className="text-xl mb-8">Iniciar soneca</p>
-                <button
-                  onClick={startSleep}
-                  className="px-12 py-5 rounded-2xl bg-purple-600 text-lg font-semibold"
-                >
-                  Começar soneca
-                </button>
-                <div className="mt-10 text-purple-300">
-                  Total de sono hoje: {Math.floor(totalSleepSec / 60)} min
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "fraldas" && (
-          <div className="pt-6">
-            <h2 className="text-xl font-semibold mb-6 text-center">Registrar fralda</h2>
-            <div className="grid grid-cols-1 gap-4 px-6">
-              <button onClick={() => addDiaper("molhada")} className="py-6 rounded-2xl bg-blue-700 font-semibold text-lg">
-                Molhada
-              </button>
-              <button onClick={() => addDiaper("suja")} className="py-6 rounded-2xl bg-amber-700 font-semibold text-lg">
-                Suja
-              </button>
-              <button onClick={() => addDiaper("mista")} className="py-6 rounded-2xl bg-orange-700 font-semibold text-lg">
-                Mista
-              </button>
-            </div>
-            <p className="text-center text-purple-300 mt-8">Hoje: {diapersToday.length} fraldas</p>
-          </div>
-        )}
-
-        {activeTab === "stats" && (
-          <div className="pt-4">
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-zinc-900 rounded-2xl p-4 text-center">
-                <p className="text-3xl font-bold">{feedsToday.length}</p>
-                <p className="text-sm text-purple-300">Mamadas</p>
-              </div>
-              <div className="bg-zinc-900 rounded-2xl p-4 text-center">
-                <p className="text-3xl font-bold">{Math.floor(totalSleepSec / 60)}</p>
-                <p className="text-sm text-purple-300">min sono</p>
-              </div>
-              <div className="bg-zinc-900 rounded-2xl p-4 text-center">
-                <p className="text-3xl font-bold">{diapersToday.length}</p>
-                <p className="text-sm text-purple-300">Fraldas</p>
-              </div>
-              <div className="bg-zinc-900 rounded-2xl p-4 text-center">
-                <p className="text-3xl font-bold">{avgFeedInterval}</p>
-                <p className="text-sm text-purple-300">min intervalo</p>
-              </div>
-            </div>
-
-            <h3 className="font-semibold mb-3">Linha do tempo de hoje</h3>
-            <div className="space-y-2">
-              {todayEvents.length === 0 && <p className="text-zinc-500">Nenhum registro ainda</p>}
-              {todayEvents.map((e) => (
-                <div key={e.id} className="bg-zinc-900 rounded-xl p-3 flex justify-between text-sm">
-                  <div>
-                    <span className="text-purple-300">
-                      {new Date(e.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
-                    </span>{" "}
-                    {e.type === "amamentacao" && `Mamada ${e.side === "esquerdo" ? "Esq" : "Dir"}`}
-                    {e.type === "sono" && "Soneca"}
-                    {e.type === "fralda" && `Fralda ${e.diaper}`}
-                  </div>
-                  <div>
-                    {e.duration ? formatTime(e.duration) : ""}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+      <main className="flex-1 px-4 pb-32">
+        {screen === "inicio" && <HomeScreen {...props} />}
+        {screen === "amamentacao" && <FeedScreen {...props} />}
+        {screen === "sono" && <SleepScreen {...props} />}
+        {screen === "fraldas" && <DiapersScreen {...props} />}
+        {screen === "mais" && <MoreScreen {...props} />}
+        {screen === "stats" && <StatsScreen {...props} />}
+        {screen === "historico" && <HistoryScreen {...props} />}
+        {screen === "crescimento" && <GrowthScreen {...props} />}
+        {screen === "saude" && <HealthScreen {...props} />}
+        {screen === "vacinas" && <VaccinesScreen {...props} />}
+        {screen === "marcos" && <MilestonesScreen {...props} />}
+        {screen === "sons" && <SoundsScreen {...props} />}
+        {screen === "relatorio" && <ReportScreen {...props} />}
+        {screen === "config" && <SettingsScreen {...props} />}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-zinc-900 border-t border-zinc-800 flex justify-around py-3 text-xs">
-        {[
-          { id: "inicio", label: "Início", icon: "🏠" },
-          { id: "amamentacao", label: "Amamentação", icon: "🤱" },
-          { id: "sono", label: "Sono", icon: "🌙" },
-          { id: "fraldas", label: "Fraldas", icon: "👶" },
-          { id: "stats", label: "Estatísticas", icon: "📊" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex flex-col items-center ${activeTab === tab.id ? "text-purple-400" : "text-zinc-500"}`}
-          >
-            <span className="text-xl">{tab.icon}</span>
-            {tab.label}
-          </button>
-        ))}
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-3 nav-safe z-20 no-print">
+        <div className="glass !rounded-[1.75rem] !bg-[rgba(14,19,40,0.82)] flex justify-between p-1.5">
+          {TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            const live =
+              (tab.id === "sono" && timer?.type === "sono") ||
+              (tab.id === "amamentacao" && timer?.type === "amamentacao");
+            return (
+              <button
+                key={tab.id}
+                onClick={() => go(tab.id)}
+                aria-current={active ? "page" : undefined}
+                className={`relative flex-1 flex flex-col items-center gap-0.5 py-2 rounded-[1.25rem] text-[11px] font-medium ${
+                  active ? "bg-[rgba(124,58,237,0.28)] text-[#d9ccff]" : "text-[var(--muted)]"
+                }`}
+              >
+                <Icon name={tab.icon} className="w-[22px] h-[22px]" />
+                {tab.label}
+                {live && <span className="pulse-dot absolute top-1.5 right-[22%]" />}
+              </button>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );

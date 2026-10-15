@@ -1,26 +1,296 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-0: #070b1a;
+  --bg-1: #0c1226;
+  --card: rgba(255, 255, 255, 0.045);
+  --card-strong: rgba(255, 255, 255, 0.07);
+  --stroke: rgba(167, 139, 250, 0.16);
+  --stroke-strong: rgba(167, 139, 250, 0.35);
+  --violet: #a78bfa;
+  --violet-deep: #7c3aed;
+  --blue: #5b9bff;
+  --text: #f4f3ff;
+  --muted: #9aa0c3;
+  --green: #4fb06d;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--bg-0);
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100dvh;
+  color: var(--text);
+  font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(900px 500px at 50% -10%, rgba(124, 58, 237, 0.22), transparent 60%),
+    radial-gradient(700px 400px at 100% 40%, rgba(59, 130, 246, 0.1), transparent 60%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-0));
+  background-attachment: fixed;
+  overscroll-behavior-y: none;
+}
+
+button {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: transform 0.12s ease, filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+button:active {
+  transform: scale(0.97);
+}
+
+/* ---------- Superfícies ---------- */
+.glass {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: 1.5rem;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.icon-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 9999px;
+  color: #d9ccff;
+  background: radial-gradient(circle at 30% 25%, rgba(167, 139, 250, 0.45), rgba(76, 29, 149, 0.55));
+  border: 1px solid var(--stroke-strong);
+}
+
+/* ---------- Texto com gradiente ---------- */
+.grad-text {
+  background: linear-gradient(90deg, #a78bfa 0%, #5b9bff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Botões ---------- */
+.btn-grad {
+  background: linear-gradient(90deg, #8b5cf6, #4f8dff);
+  color: #fff;
+  box-shadow: 0 12px 28px -10px rgba(99, 102, 241, 0.7);
+}
+.btn-grad:hover {
+  filter: brightness(1.08);
+}
+
+.btn-ghost {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--stroke-strong);
+  color: #cfc4ff;
+}
+.btn-ghost:hover {
+  background: rgba(167, 139, 250, 0.12);
+}
+
+.btn-green {
+  background: linear-gradient(180deg, #5db77a, #479c63);
+  color: #fff;
+  box-shadow: 0 12px 28px -12px rgba(79, 176, 109, 0.7);
+}
+
+/* ---------- Pílula "ao vivo" ---------- */
+.pulse-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--violet);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.6); }
+  50% { box-shadow: 0 0 0 6px rgba(167, 139, 250, 0); }
+}
+
+/* ---------- Transição de abas ---------- */
+.fade-in {
+  animation: fade-in 0.28s ease both;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- Anel do timer ---------- */
+.ring-progress {
+  transition: stroke-dashoffset 0.9s linear;
+  filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.55));
+}
+
+/* ---------- Barra de navegação ---------- */
+.nav-safe {
+  padding-bottom: max(0.6rem, env(safe-area-inset-bottom));
+}
+
+/* ---------- Linha do tempo ---------- */
+.timeline-line::before {
+  content: "";
+  position: absolute;
+  left: 0.5rem;
+  top: 0.9rem;
+  bottom: 0.9rem;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(167, 139, 250, 0.6), rgba(167, 139, 250, 0.08));
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ---------- Formulários ---------- */
+.field {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.65rem 0.9rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem; /* 16px evita o zoom automático do iPhone ao tocar no campo */
+  outline: none;
+  color-scheme: dark;
+}
+.field:focus {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.22);
+}
+.field::placeholder {
+  color: rgba(154, 160, 195, 0.7);
+}
+textarea.field {
+  min-height: 5rem;
+  resize: vertical;
+}
+.label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+
+.chip {
+  padding: 0.5rem 0.9rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--stroke);
+  color: var(--muted);
+}
+.chip-on {
+  background: rgba(124, 58, 237, 0.3);
+  border-color: var(--violet);
+  color: #e9e1ff;
+}
+
+/* ---------- Janela que sobe de baixo ---------- */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(3, 5, 14, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: overlay-in 0.2s ease both;
+}
+.sheet {
+  width: 100%;
+  max-width: 28rem;
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 1.25rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  border-radius: 1.75rem 1.75rem 0 0;
+  background: linear-gradient(180deg, #151b38, #0d1226);
+  border: 1px solid var(--stroke-strong);
+  border-bottom: 0;
+  animation: sheet-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@keyframes overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-in {
+  from { transform: translateY(40px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ---------- Modo noturno ---------- */
+html.night {
+  filter: brightness(0.6) sepia(0.28) saturate(0.85);
+}
+
+/* ---------- Impressão (relatório em PDF) ---------- */
+@media print {
+  html, body {
+    background: #fff !important;
+    filter: none !important;
+  }
+  body {
+    color: #111 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area {
+    max-width: none !important;
+    padding: 0 !important;
+    color: #111 !important;
+  }
+  .print-area .glass {
+    background: #fff !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    color: #111 !important;
+  }
+  .print-area * {
+    color: #111 !important;
+    -webkit-text-fill-color: #111 !important;
+  }
+  .print-area th,
+  .print-area td {
+    border-bottom: 1px solid #ddd !important;
+    font-size: 12px;
+  }
+}
+
+/* Tabelas do relatório (tela e impressão) */
+.print-area table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.print-area th,
+.print-area td {
+  padding: 6px 8px;
+  text-align: left;
+  border-bottom: 1px solid rgba(167, 139, 250, 0.16);
+  font-size: 0.8125rem;
+}
+.print-area th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+
+/* Primeira letra maiúscula (datas vêm em minúsculas do navegador) */
+.cap-first::first-letter {
+  text-transform: uppercase;
 }
