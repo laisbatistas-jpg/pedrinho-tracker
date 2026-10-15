@@ -14,6 +14,7 @@ export type BabyEvent = {
   milk?: "materno" | "formula";
   diaper?: DiaperKind;
   note?: string;
+  by?: string; // quem registrou
 };
 
 export type Timer = {
@@ -31,6 +32,7 @@ export type Growth = {
   heightCm?: number;
   headCm?: number;
   note?: string;
+  by?: string;
 };
 
 export type HealthKind = "remedio" | "temperatura" | "sintoma" | "humor";
@@ -46,6 +48,7 @@ export type HealthEntry = {
   tempC?: number;
   mood?: Mood;
   note?: string;
+  by?: string;
 };
 
 export const VACCINE_REACTIONS = [
@@ -68,6 +71,8 @@ export type VaccineRecord = {
   reactions?: string[]; // sintomas depois da vacina
   reactionNote?: string;
   note?: string;
+  photos?: string[]; // fotos da caderneta/comprovante (pequenas)
+  by?: string;
 };
 
 export type VisitKind = "pediatra" | "retorno" | "exame" | "vacina" | "especialista" | "outro";
@@ -90,6 +95,8 @@ export type Visit = {
   weightKg?: number;
   heightCm?: number;
   headCm?: number;
+  photos?: string[]; // receitas, exames, pedidos (pequenas)
+  by?: string;
 };
 
 export type Milestone = {
@@ -98,6 +105,44 @@ export type Milestone = {
   title: string;
   note?: string;
   photo?: string; // dataURL pequena
+  by?: string;
+};
+
+/** Ficha de emergência: dados que a família quer à mão numa intercorrência. */
+export type EmergencyCard = {
+  pediatra: string;
+  pediatraPhone: string;
+  hospital: string;
+  hospitalPhone: string;
+  hospitalAddress: string;
+  insurance: string;
+  insuranceNumber: string;
+  bloodType: string;
+  allergies: string;
+  meds: string; // remédios de uso contínuo
+  contact1Name: string;
+  contact1Phone: string;
+  contact2Name: string;
+  contact2Phone: string;
+  note: string;
+};
+
+export const DEFAULT_CARD: EmergencyCard = {
+  pediatra: "",
+  pediatraPhone: "",
+  hospital: "",
+  hospitalPhone: "",
+  hospitalAddress: "",
+  insurance: "",
+  insuranceNumber: "",
+  bloodType: "",
+  allergies: "",
+  meds: "",
+  contact1Name: "",
+  contact1Phone: "",
+  contact2Name: "",
+  contact2Phone: "",
+  note: "",
 };
 
 export type Settings = {
@@ -124,6 +169,8 @@ export type Prefs = {
   syncKey: string;
   familyCode: string;
   lastPull: number;
+  who: string; // quem usa este aparelho (aparece nos registros)
+  whoAsked: boolean;
 };
 
 export const DEFAULT_PREFS: Prefs = {
@@ -133,9 +180,11 @@ export const DEFAULT_PREFS: Prefs = {
   syncKey: "",
   familyCode: "",
   lastPull: 0,
+  who: "",
+  whoAsked: false,
 };
 
-export type Kind = "event" | "growth" | "health" | "vaccine" | "visit" | "milestone" | "settings" | "timer";
+export type Kind = "event" | "growth" | "health" | "vaccine" | "visit" | "card" | "milestone" | "settings" | "timer";
 
 export type Rec = {
   id: string;

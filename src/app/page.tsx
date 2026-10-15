@@ -11,6 +11,7 @@ import { StatsScreen } from "@/components/screens/Stats";
 import { HistoryScreen } from "@/components/screens/History";
 import { GrowthScreen } from "@/components/screens/Growth";
 import { HealthScreen } from "@/components/screens/Health";
+import { EmergencyScreen } from "@/components/screens/Emergency";
 import { VisitsScreen } from "@/components/screens/Visits";
 import { VaccinesScreen } from "@/components/screens/Vaccines";
 import { MilestonesScreen } from "@/components/screens/Milestones";
@@ -31,7 +32,7 @@ const TABS: { id: Screen; label: string; icon: IconName }[] = [
 
 // telas que pertencem à aba "Mais"
 const MORE_SCREENS: Screen[] = [
-  "mais", "stats", "historico", "crescimento", "saude", "vacinas", "consultas", "marcos", "sons", "relatorio", "config",
+  "mais", "stats", "historico", "crescimento", "saude", "vacinas", "consultas", "emergencia", "marcos", "sons", "relatorio", "config",
 ];
 
 export default function Home() {
@@ -116,6 +117,7 @@ export default function Home() {
         {screen === "crescimento" && <GrowthScreen {...props} />}
         {screen === "saude" && <HealthScreen {...props} />}
         {screen === "vacinas" && <VaccinesScreen {...props} />}
+        {screen === "emergencia" && <EmergencyScreen {...props} />}
         {screen === "consultas" && <VisitsScreen {...props} />}
         {screen === "marcos" && <MilestonesScreen {...props} />}
         {screen === "sons" && <SoundsScreen {...props} />}

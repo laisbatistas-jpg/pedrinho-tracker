@@ -27,6 +27,22 @@ export function HomeScreen({ app, go }: ScreenProps) {
     <div className="fade-in space-y-4">
       <AlertList alerts={app.alerts} />
 
+      {!app.prefs.whoAsked && !app.prefs.who && (
+        <section className="glass p-5">
+          <h2 className="font-semibold text-lg leading-tight">Quem está usando este celular?</h2>
+          <p className="text-sm text-[var(--muted)] mb-3">Seu nome aparece nos registros que você fizer.</p>
+          <div className="flex flex-wrap gap-2">
+            {["Mãe", "Pai", "Avó", "Avô", "Babá"].map((w) => (
+              <button key={w} type="button" onClick={() => app.setPrefs({ who: w, whoAsked: true })} className="chip">
+                {w}
+              </button>
+            ))}
+            <button type="button" onClick={() => go("config")} className="chip">Outro nome…</button>
+            <button type="button" onClick={() => app.setPrefs({ whoAsked: true })} className="chip">Agora não</button>
+          </div>
+        </section>
+      )}
+
       {agenda.length > 0 && (
         <section className="glass p-5">
           <div className="flex items-center justify-between mb-3">
@@ -189,6 +205,17 @@ export function HomeScreen({ app, go }: ScreenProps) {
           </button>
         )}
       </section>
+
+      <button onClick={() => go("emergencia")} className="glass w-full p-4 flex items-center gap-3 text-left">
+        <span className="icon-badge w-10 h-10 !text-red-200">
+          <Icon name="alert" className="w-5 h-5" />
+        </span>
+        <span className="flex-1">
+          <span className="block font-semibold leading-tight">Ficha de emergência</span>
+          <span className="block text-xs text-[var(--muted)]">Telefones, alergias e resumo para o médico</span>
+        </span>
+        <Icon name="chevron" className="w-5 h-5 text-[var(--muted)]" />
+      </button>
 
       {bottleOpen && <BottleSheet onClose={() => setBottleOpen(false)} onSave={(ml, milk) => app.addBottle(ml, milk)} />}
       {adding && <EventForm onSave={app.saveEvent} onClose={() => setAdding(false)} />}

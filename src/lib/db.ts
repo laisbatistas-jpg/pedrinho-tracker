@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  DEFAULT_CARD,
   DEFAULT_PREFS,
   DEFAULT_SETTINGS,
   type BabyEvent,
+  type EmergencyCard,
   type Growth,
   type HealthEntry,
   type Kind,
@@ -27,6 +29,8 @@ const OLD_TIMER_KEY = "pedrinho-timer-v1";
 
 const ENV_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const ENV_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+
+const STAMPED: Kind[] = ["event", "growth", "health", "visit", "vaccine", "milestone"];
 
 const keyOf = (kind: Kind, id: string) => `${kind}:${id}`;
 
@@ -248,10 +252,17 @@ export function useDb() {
     <T,>(kind: Kind, id: string, data: T) => {
       const k = keyOf(kind, id);
       const prev = recsRef.current[k];
+      // carimba quem registrou (mantém o autor original ao editar)
+      let out: unknown = data;
+      if (STAMPED.includes(kind) && data && typeof data === "object") {
+        const prevBy = prev && !prev.deleted ? (prev.data as { by?: string } | null)?.by : undefined;
+        const by = (data as { by?: string }).by ?? prevBy ?? (prefsRef.current.who || undefined);
+        if (by) out = { ...(data as object), by };
+      }
       const rec: Rec = {
         id,
         kind,
-        data,
+        data: out,
         updatedAt: Math.max(Date.now(), (prev?.updatedAt ?? 0) + 1),
         deleted: false,
       };
@@ -327,6 +338,11 @@ export function useDb() {
     live("vaccine").forEach((r) => {
       vaccines[r.id] = r.data as VaccineRecord;
     });
+    const cardRec = recs[keyOf("card", "main")];
+    const card: EmergencyCard = {
+      ...DEFAULT_CARD,
+      ...(cardRec && !cardRec.deleted ? (cardRec.data as Partial<EmergencyCard>) : {}),
+    };
     const settingsRec = recs[keyOf("settings", "main")];
     const settings: Settings = {
       ...DEFAULT_SETTINGS,
@@ -335,7 +351,7 @@ export function useDb() {
     const timerRec = recs[keyOf("timer", "main")];
     const timer: Timer["active"] = timerRec && !timerRec.deleted ? (timerRec.data as Timer).active : null;
 
-    return { events, growth, health, milestones, vaccines, visits, settings, timer };
+    return { events, growth, health, milestones, vaccines, visits, card, settings, timer };
   }, [recs]);
 
   return {

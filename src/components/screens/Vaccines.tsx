@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
-import { Chips, Field, ScreenHeader, Sheet, SheetActions } from "@/components/ui";
+import { Chips, Field, PhotoField, ScreenHeader, Sheet, SheetActions } from "@/components/ui";
 import { downloadIcs, placeLine } from "@/lib/agenda";
 import type { ScreenProps } from "@/lib/nav";
 import { VACCINES, type VaccineDef } from "@/lib/reference";
@@ -86,6 +86,10 @@ export function VaccinesScreen({ app, go }: ScreenProps) {
                       {(rec?.place || rec?.address) && (
                         <p className="text-xs text-[var(--muted)]">{placeLine(rec)}</p>
                       )}
+                      {rec?.photos && rec.photos.length > 0 && (
+                        <p className="text-xs text-[var(--muted)]">{rec.photos.length} {rec.photos.length === 1 ? "foto anexada" : "fotos anexadas"}</p>
+                      )}
+                      {rec?.by && <p className="text-xs text-[var(--muted)]">Registrado por {rec.by}</p>}
                       {rec?.doneAt && rec.reactions && rec.reactions.length > 0 && !rec.reactions.includes("Sem reação") && (
                         <p className="text-xs text-amber-200 mt-0.5">Reação: {rec.reactions.join(", ").toLowerCase()}</p>
                       )}
@@ -145,6 +149,7 @@ function VaccineForm({
   const [reactions, setReactions] = useState<string[]>(rec?.reactions ?? []);
   const [reactionNote, setReactionNote] = useState(rec?.reactionNote ?? "");
   const [note, setNote] = useState(rec?.note ?? "");
+  const [photos, setPhotos] = useState<string[]>(rec?.photos ?? []);
   const [error, setError] = useState("");
 
   // locais já usados antes (para não digitar tudo de novo)
@@ -163,6 +168,7 @@ function VaccineForm({
     address: address.trim() || undefined,
     applier: applier.trim() || undefined,
     note: note.trim() || undefined,
+    photos: photos.length ? photos : undefined,
   });
 
   const save = () => {
@@ -275,6 +281,8 @@ function VaccineForm({
       <Field label="Observação">
         <input className="field" value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
+
+      <PhotoField label="Fotos (caderneta, comprovante, local da reação)" photos={photos} onChange={setPhotos} />
 
       <SheetActions
         saveLabel={mode === "agendada" ? "Salvar agendamento" : "Marcar como aplicada"}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "./Icon";
 import type { BabyEvent, DiaperKind, EventType, Side } from "@/lib/types";
@@ -12,6 +12,7 @@ import {
   formatTime,
   fromLocalInput,
   genId,
+  resizeImage,
   sideLabel,
   toLocalInput,
 } from "@/lib/utils";
@@ -205,6 +206,7 @@ export function Timeline({
               <p className="text-xs text-[var(--muted)] truncate">
                 {eventSub(e)}
                 {e.note ? ` • ${e.note}` : ""}
+                {e.by ? ` • por ${e.by}` : ""}
               </p>
             </div>
             {e.type === "fralda" ? (
@@ -572,5 +574,131 @@ export function EventForm({
         }
       />
     </Sheet>
+  );
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Fotos (receitas, exames, caderneta)                                 */
+/* ------------------------------------------------------------------ */
+
+/** Foto em tela cheia. Toque em qualquer lugar para fechar. */
+export function PhotoViewer({ src, onClose }: { src: string; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[60] bg-black/90 grid place-items-center p-3 no-print"
+      onClick={onClose}
+      role="dialog"
+      aria-label="Foto ampliada"
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="Foto ampliada" className="max-w-full max-h-[88dvh] object-contain rounded-xl" />
+      <button onClick={onClose} aria-label="Fechar foto" className="absolute top-4 right-4 icon-badge w-11 h-11">
+        <Icon name="close" className="w-5 h-5" />
+      </button>
+    </div>,
+    document.body
+  );
+}
+
+/** Miniaturas que abrem em tela cheia ao tocar. */
+export function PhotoThumbs({ photos, onRemove }: { photos: string[]; onRemove?: (i: number) => void }) {
+  const [open, setOpen] = useState<string | null>(null);
+  if (photos.length === 0) return null;
+  return (
+    <>
+      <div className="flex flex-wrap gap-2">
+        {photos.map((p, i) => (
+          <div key={i} className="relative">
+            <button type="button" onClick={() => setOpen(p)} aria-label={`Ampliar foto ${i + 1}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={p} alt={`Foto ${i + 1}`} className="w-16 h-16 object-cover rounded-xl border border-[var(--stroke-strong)]" />
+            </button>
+            {onRemove && (
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                aria-label={`Remover foto ${i + 1}`}
+                className="absolute -top-2 -right-2 icon-badge w-7 h-7 !bg-black/70"
+              >
+                <Icon name="close" className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+      {open && <PhotoViewer src={open} onClose={() => setOpen(null)} />}
+    </>
+  );
+}
+
+/** Campo para anexar fotos (até `max`), já reduzidas para não pesar. */
+export function PhotoField({
+  label,
+  photos,
+  onChange,
+  max = 4,
+}: {
+  label: string;
+  photos: string[];
+  onChange: (p: string[]) => void;
+  max?: number;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const pick = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    setErr("");
+    try {
+      const next = [...photos];
+      for (const f of Array.from(files)) {
+        if (next.length >= max) break;
+        next.push(await resizeImage(f, 1000, 0.6));
+      }
+      onChange(next);
+    } catch {
+      setErr("Não consegui usar essa foto. Tente outra.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Field label={label} group>
+      <PhotoThumbs photos={photos} onRemove={(i) => onChange(photos.filter((_, k) => k !== i))} />
+      {photos.length < max && (
+        <button
+          type="button"
+          onClick={() => ref.current?.click()}
+          className={`btn-ghost w-full h-12 rounded-2xl flex items-center justify-center gap-2 font-semibold ${photos.length ? "mt-3" : ""}`}
+        >
+          <Icon name="camera" className="w-5 h-5" /> {busy ? "Preparando foto…" : "Tirar ou escolher foto"}
+        </button>
+      )}
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          void pick(e.target.files);
+          e.target.value = "";
+        }}
+      />
+      {err && <p className="text-sm text-amber-300 mt-2">{err}</p>}
+      <p className="text-xs text-[var(--muted)] mt-2">Até {max} fotos. Elas ficam reduzidas para caber no celular.</p>
+    </Field>
   );
 }

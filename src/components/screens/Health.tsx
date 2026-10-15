@@ -139,6 +139,7 @@ export function HealthScreen({ app, go }: ScreenProps) {
                       {formatDate(h.timestamp)} às {formatClock(h.timestamp)}
                       {h.kind === "remedio" && h.everyHours ? ` • a cada ${h.everyHours}h` : ""}
                       {h.note ? ` • ${h.note}` : ""}
+                      {h.by ? ` • por ${h.by}` : ""}
                     </p>
                   </div>
                 </button>

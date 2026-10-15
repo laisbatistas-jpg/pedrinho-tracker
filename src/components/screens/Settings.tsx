@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Chips, Field, ScreenHeader } from "@/components/ui";
 import type { ScreenProps } from "@/lib/nav";
@@ -43,6 +43,15 @@ export function SettingsScreen({ app, go }: ScreenProps) {
   const [key, setKey] = useState(prefs.syncKey);
   const [family, setFamily] = useState(prefs.familyCode);
   const [msg, setMsg] = useState("");
+  const [who, setWho] = useState(prefs.who);
+  const [usedChars, setUsedChars] = useState(0);
+  useEffect(() => {
+    try {
+      setUsedChars((localStorage.getItem("pedrinho-db-v3") || "").length);
+    } catch {
+      /* sem armazenamento */
+    }
+  }, [app.events.length, app.visits.length, app.vaccines]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const patch = (p: Partial<Settings>) => app.upsert<Settings>("settings", "main", { ...settings, ...p });
@@ -130,6 +139,35 @@ export function SettingsScreen({ app, go }: ScreenProps) {
           />
         </Field>
         {saved && <p className="text-sm text-emerald-300">Salvo ✓</p>}
+      </section>
+
+      <section className="glass p-5">
+        <h2 className="font-semibold text-lg mb-1">Quem usa este celular?</h2>
+        <p className="text-sm text-[var(--muted)] mb-4">
+          Seu nome aparece em cada registro que você fizer (“por Samuel”). Assim a família sabe quem deu o remédio ou trocou a fralda.
+        </p>
+        <Field label="Seu nome" group>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {["Mãe", "Pai", "Avó", "Avô", "Babá"].map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => app.setPrefs({ who: w, whoAsked: true })}
+                className={`chip ${prefs.who === w ? "chip-on" : ""}`}
+              >
+                {w}
+              </button>
+            ))}
+          </div>
+          <input
+            className="field"
+            value={who}
+            onChange={(e) => setWho(e.target.value)}
+            onBlur={() => app.setPrefs({ who: who.trim(), whoAsked: true })}
+            placeholder="Ou escreva o nome"
+            aria-label="Seu nome"
+          />
+        </Field>
       </section>
 
       <section className="glass p-5 space-y-4">
@@ -243,6 +281,23 @@ export function SettingsScreen({ app, go }: ScreenProps) {
           </button>
         )}
         {app.syncError && <p className="text-sm text-amber-300 mt-2 break-words">{app.syncError}</p>}
+      </section>
+
+      <section className="glass p-5">
+        <h2 className="font-semibold text-lg mb-1">Espaço usado</h2>
+        <p className="text-sm text-[var(--muted)] mb-3">
+          Registros e fotos ficam guardados neste aparelho (limite de cerca de 5 MB). Faça backup de vez em quando.
+        </p>
+        <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+          <div
+            className={`h-full ${usedChars > 3500000 ? "bg-amber-400" : "btn-grad"}`}
+            style={{ width: `${Math.min(100, (usedChars / 5000000) * 100)}%` }}
+          />
+        </div>
+        <p className="text-xs text-[var(--muted)] mt-2">
+          {(usedChars / 1000000).toFixed(1).replace(".", ",")} MB de ~5 MB
+          {usedChars > 3500000 ? " — quase cheio. Faça backup e evite novas fotos grandes." : ""}
+        </p>
       </section>
 
       <section className="glass p-5">

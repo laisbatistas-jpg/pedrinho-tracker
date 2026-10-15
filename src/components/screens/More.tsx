@@ -4,6 +4,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import type { Screen, ScreenProps } from "@/lib/nav";
 
 const ITEMS: { id: Screen; label: string; hint: string; icon: IconName }[] = [
+  { id: "emergencia", label: "Emergência", hint: "Ficha, telefones e resumo", icon: "alert" },
   { id: "stats", label: "Estatísticas", hint: "Gráficos da semana", icon: "chart" },
   { id: "historico", label: "Histórico", hint: "Dias anteriores", icon: "calendar" },
   { id: "crescimento", label: "Crescimento", hint: "Peso, altura e curva OMS", icon: "trend" },

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Icon } from "@/components/Icon";
-import { Chips, Empty, Field, ScreenHeader, Sheet, SheetActions } from "@/components/ui";
+import { Chips, Empty, Field, PhotoField, PhotoThumbs, ScreenHeader, Sheet, SheetActions } from "@/components/ui";
 import { countdownLabel, daysUntil, downloadIcs, listAppointments, placeLine, visitTitle, type Appointment } from "@/lib/agenda";
 import type { ScreenProps } from "@/lib/nav";
 import { VISIT_KINDS } from "@/lib/reference";
@@ -143,8 +143,14 @@ function VisitCard({
             </span>
           )}
           {isPast && v.note && <p className="text-sm mt-2 text-[var(--muted)] line-clamp-3">{v.note}</p>}
+          {v.by && <p className="text-xs text-[var(--muted)] mt-2">Registrado por {v.by}</p>}
         </div>
       </button>
+      {v.photos && v.photos.length > 0 && (
+        <div className="mt-3">
+          <PhotoThumbs photos={v.photos} />
+        </div>
+      )}
       {!isPast && (
         <div className="flex gap-2 mt-3">
           {onDone && (
@@ -189,6 +195,7 @@ function VisitForm({
   const [weight, setWeight] = useState(visit?.weightKg ? String(visit.weightKg).replace(".", ",") : "");
   const [height, setHeight] = useState(visit?.heightCm ? String(visit.heightCm).replace(".", ",") : "");
   const [head, setHead] = useState(visit?.headCm ? String(visit.headCm).replace(".", ",") : "");
+  const [photos, setPhotos] = useState<string[]>(visit?.photos ?? []);
   const [returnWhen, setReturnWhen] = useState("");
   const [error, setError] = useState("");
 
@@ -209,6 +216,7 @@ function VisitForm({
       place: place.trim() || undefined,
       address: address.trim() || undefined,
       reason: reason.trim() || undefined,
+      photos: photos.length ? photos : undefined,
     };
     const gid = `visit-${id}`;
     if (status === "realizada") {
@@ -344,6 +352,8 @@ function VisitForm({
           </Field>
         </>
       )}
+
+      <PhotoField label="Fotos (receita, exame, pedido)" photos={photos} onChange={setPhotos} />
 
       <SheetActions
         saveLabel={status === "realizada" ? "Salvar consulta" : visit ? "Salvar" : "Agendar"}
