@@ -9,7 +9,7 @@ export type ServerEnv = {
 
 export function readEnv(): ServerEnv | null {
   const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim().replace(/\/+$/, "");
-  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || "").replace(/["'\s]/g, "");
   // aceita a chave mesmo com aspas, espaços, "=" no fim ou traço trocado pelo teclado do celular
   const vapidPrivate = (process.env.VAPID_PRIVATE_KEY || "")
     .replace(/[\u2010-\u2015\u2212]/g, "-")

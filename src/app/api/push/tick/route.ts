@@ -37,7 +37,14 @@ export async function GET(request: Request) {
   try {
     subs = await rest<Sub[]>(env, "push_subs?select=family,endpoint,p256dh,auth,tz");
   } catch (e) {
-    return Response.json({ ok: false, etapa: "ler celulares no Supabase", error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+    const k = env.serviceKey;
+    const dica = {
+      comecaCom: k.slice(0, 10),
+      tamanho: k.length,
+      temPontinhos: /[•…]/.test(k),
+      tipo: k.startsWith("sb_secret_") ? "sb_secret (esperado ~41 a 60 caracteres)" : k.startsWith("eyJ") ? "service_role antiga (esperado ~200+ caracteres)" : k.startsWith("sb_publishable_") ? "ERRADA: e a chave publishable" : "formato desconhecido",
+    };
+    return Response.json({ ok: false, etapa: "ler celulares no Supabase", dica, error: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
   const byFamily = new Map<string, Sub[]>();
   for (const s of subs) byFamily.set(s.family, [...(byFamily.get(s.family) ?? []), s]);
