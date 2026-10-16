@@ -283,8 +283,8 @@ export function SettingsScreen({ app, go }: ScreenProps) {
         <Toggle
           on={prefs.notify}
           onChange={askNotify}
-          label="Notificações do navegador"
-          hint="Funcionam com o app aberto ou em segundo plano. Para avisos com o app fechado seria preciso um serviço extra."
+          label="Avisos com o app aberto"
+          hint="Aparecem enquanto o app está aberto ou em segundo plano. Para receber com o app fechado e a tela desligada, ative em “Avisos no celular”, logo abaixo."
         />
       </section>
 
