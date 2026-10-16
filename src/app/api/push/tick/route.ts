@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   try {
     wp.setVapidDetails("https://pedrinho-tracker.vercel.app", PUSH_PUBLIC_KEY, env.vapidPrivate);
   } catch (e) {
-    return Response.json({ ok: false, etapa: "chave VAPID", error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+    return Response.json({ ok: false, etapa: "chave VAPID", tamanho: env.vapidPrivate.length, esperado: 43, error: e instanceof Error ? e.message : String(e) }, { status: 500 });
   }
 
   const now = Date.now();
