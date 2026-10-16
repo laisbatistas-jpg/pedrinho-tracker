@@ -1,5 +1,5 @@
 import { PUSH_PUBLIC_KEY } from "@/lib/pushKey";
-import { planPushes, type PlanEvent, type PlanVaccine, type PlanVisit } from "@/lib/pushPlan";
+import { planPushes, type PlanEvent, type PlanHealth, type PlanVaccine, type PlanVisit } from "@/lib/pushPlan";
 import { inList, loadWebPush, missingEnv, readEnv, rest } from "@/lib/pushServer";
 import { VACCINES } from "@/lib/reference";
 
@@ -56,13 +56,20 @@ export async function GET(request: Request) {
   for (const [family, list] of byFamily) {
     try {
       const fam = `family=eq.${encodeURIComponent(family)}&deleted=eq.false`;
-      const [others, evs] = await Promise.all([
+      const [others, evs, hl] = await Promise.all([
         rest<Row[]>(env, `records?${fam}&kind=in.(settings,visit,vaccine,timer)&select=kind,id,data`),
-        rest<Row[]>(env, `records?${fam}&kind=eq.event&order=updated_at.desc&limit=300&select=kind,id,data`),
+        rest<Row[]>(env, `records?${fam}&kind=eq.event&order=updated_at.desc&limit=400&select=kind,id,data`),
+        rest<Row[]>(env, `records?${fam}&kind=eq.health&order=updated_at.desc&limit=120&select=kind,id,data`),
       ]);
 
       const settingsRow = others.find((r) => r.kind === "settings" && r.id === "main");
-      const settings = (settingsRow?.data ?? {}) as { name?: string; alertFeedHours?: number; alertFeedLeadMin?: number };
+      const settings = (settingsRow?.data ?? {}) as {
+        name?: string;
+        alertFeedHours?: number;
+        alertFeedLeadMin?: number;
+        alertPoopDays?: number;
+        alertDailySummary?: boolean;
+      };
       const timerRow = others.find((r) => r.kind === "timer" && r.id === "main");
       const timerActive = Boolean((timerRow?.data as { active?: unknown } | null)?.active);
 
@@ -79,6 +86,7 @@ export async function GET(request: Request) {
         visits: others.filter((r) => r.kind === "visit" && r.data).map((r) => ({ ...(r.data as object), id: r.id }) as PlanVisit),
         vaccines,
         vaccineNames,
+        health: hl.filter((r) => r.data).map((r) => ({ ...(r.data as object), id: r.id }) as PlanHealth),
       });
       if (plan.length === 0) continue;
 

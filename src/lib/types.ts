@@ -159,6 +159,8 @@ export type Settings = {
   alertFeedHours: number; // intervalo entre mamadas, em horas (ex.: 1.5 = 1h30). 0 = desligado
   alertFeedLeadMin: number; // avisar tantos minutos antes (0 = só na hora)
   alertSleepHours: number; // 0 = desligado
+  alertPoopDays: number; // avisar se passar X dias sem coco (0 = desligado)
+  alertDailySummary: boolean; // aviso à noite com o resumo do dia
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -168,6 +170,8 @@ export const DEFAULT_SETTINGS: Settings = {
   alertFeedHours: 3,
   alertFeedLeadMin: 0,
   alertSleepHours: 0,
+  alertPoopDays: 0,
+  alertDailySummary: true,
 };
 
 /** Preferências só deste aparelho (não sincronizam). */

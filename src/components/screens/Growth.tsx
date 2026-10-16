@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { Chips, Empty, Field, ScreenHeader, Sheet, SheetActions } from "@/components/ui";
 import type { ScreenProps } from "@/lib/nav";
 import type { Growth } from "@/lib/types";
-import { METRIC_INFO, WHO, growthBand, type GrowthMetric } from "@/lib/reference";
+import { METRIC_INFO, WHO, growthBand, growthPercentile, type GrowthMetric } from "@/lib/reference";
 import { ageInMonths, ageLabel, fmtNum, formatDate, fromDateInput, genId, toDateInput } from "@/lib/utils";
 
 const W = 340;
@@ -94,6 +94,10 @@ export function GrowthScreen({ app, go }: ScreenProps) {
     latest && latest.months !== null
       ? growthBand(settings.sex, metric, latest.months, latest.g[metric] as number)
       : null;
+  const pct =
+    latest && latest.months !== null
+      ? growthPercentile(settings.sex, metric, latest.months, latest.g[metric] as number)
+      : null;
   const bandText =
     band === "dentro"
       ? "Dentro da faixa de referência da OMS."
@@ -146,7 +150,17 @@ export function GrowthScreen({ app, go }: ScreenProps) {
             <p className="grad-text text-3xl font-extrabold">
               {fmtNum(latest.g[metric] as number, metric === "weightKg" ? 2 : 1)} {info.unit}
             </p>
+            {pct !== null && (
+              <p className="text-sm mt-1">
+                Aproximadamente no <strong>percentil {pct}</strong>: maior que cerca de {pct}% dos bebês da mesma idade e sexo.
+              </p>
+            )}
             {bandText && <p className="text-sm mt-1">{bandText}</p>}
+            {pct !== null && (
+              <p className="text-[11px] text-[var(--muted)] mt-1">
+                Estimativa a partir da curva da OMS. O que importa é a tendência ao longo das medições, e a avaliação é do pediatra.
+              </p>
+            )}
           </div>
         )}
       </section>

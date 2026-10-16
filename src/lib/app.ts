@@ -14,6 +14,7 @@ import {
   formatDur,
   genId,
   isFeed,
+  isPoop,
   startOfDay,
 } from "./utils";
 
@@ -297,10 +298,24 @@ export function useApp() {
           episode: h.id,
           tone: "warn",
           title: `Remédio: ${h.name}`,
-          text: `Próxima dose estava prevista para ${formatClock(due)}.`,
+          text: `Próxima dose estava prevista para ${formatClock(due)}. Última dose às ${formatClock(h.timestamp)}${h.by ? ` (${h.by})` : ""}.`,
         });
       }
     });
+
+    // tempo sem coco
+    if (settings.alertPoopDays > 0) {
+      const lastPoop = events.find(isPoop);
+      if (lastPoop && nowTs - lastPoop.timestamp >= settings.alertPoopDays * DAY) {
+        list.push({
+          id: "poop",
+          episode: `${lastPoop.id}:${settings.alertPoopDays}`,
+          tone: "info",
+          title: `${settings.name || "Ele"} está há ${settings.alertPoopDays} dias sem coco`,
+          text: `Último registrado em ${formatDate(lastPoop.timestamp).slice(0, 5)} às ${formatClock(lastPoop.timestamp)}. Se ele estiver incomodado, converse com o pediatra.`,
+        });
+      }
+    }
 
     // consultas e vacinas agendadas: 7, 3 e 1 dia antes, e às 6h do próprio dia
     for (const ap of listAppointments(visits, vaccines)) {
@@ -337,7 +352,7 @@ export function useApp() {
       });
     }
     return list;
-  }, [derived, settings.alertFeedHours, settings.alertFeedLeadMin, settings.alertSleepHours, timer, elapsed, health, visits, vaccines, nowTs]);
+  }, [derived, settings.alertFeedHours, settings.alertFeedLeadMin, settings.alertSleepHours, settings.alertPoopDays, settings.name, events, timer, elapsed, health, visits, vaccines, nowTs]);
 
   /* ================= notificações do navegador ================= */
 

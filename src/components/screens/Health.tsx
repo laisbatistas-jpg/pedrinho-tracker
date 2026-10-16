@@ -5,7 +5,7 @@ import { Icon, type IconName } from "@/components/Icon";
 import { AlertList, Chips, Empty, Field, ScreenHeader, Sheet, SheetActions } from "@/components/ui";
 import type { ScreenProps } from "@/lib/nav";
 import type { HealthEntry, HealthKind, Mood } from "@/lib/types";
-import { fmtNum, formatClock, formatDate, fromLocalInput, genId, toLocalInput } from "@/lib/utils";
+import { fmtNum, formatClock, formatDate, formatDur, fromLocalInput, genId, toLocalInput } from "@/lib/utils";
 
 const KIND_INFO: Record<HealthKind, { label: string; icon: IconName }> = {
   remedio: { label: "Remédio", icon: "pill" },
@@ -69,8 +69,40 @@ function TempChart({ entries }: { entries: HealthEntry[] }) {
   );
 }
 
+/** Remédios com repetição (a cada X horas) dados nos últimos 14 dias: a dose mais recente de cada um. */
+function medsInUse(health: HealthEntry[], now: number): HealthEntry[] {
+  const seen = new Map<string, HealthEntry>();
+  for (const h of health) {
+    if (h.kind !== "remedio" || !h.name || !h.everyHours) continue;
+    if (now - h.timestamp > 14 * 86400000) continue;
+    const k = h.name.trim().toLowerCase();
+    const cur = seen.get(k);
+    if (!cur || h.timestamp > cur.timestamp) seen.set(k, h);
+  }
+  return Array.from(seen.values()).sort((a, b) => a.timestamp + (a.everyHours ?? 0) * 3600000 - (b.timestamp + (b.everyHours ?? 0) * 3600000));
+}
+
+/** Se a dose anterior foi há menos de 75% do intervalo, é provável que esteja repetindo. */
+function tooSoon(last: HealthEntry, now: number): boolean {
+  return now - last.timestamp < (last.everyHours ?? 0) * 3600000 * 0.75;
+}
+
 export function HealthScreen({ app, go }: ScreenProps) {
   const { health } = app;
+  const nowTs = app.now || Date.now();
+  const inUse = medsInUse(health, nowTs);
+  const [dosePending, setDosePending] = useState<HealthEntry | null>(null);
+  const giveDose = (last: HealthEntry) => {
+    const h: HealthEntry = {
+      id: genId(),
+      kind: "remedio",
+      timestamp: Date.now(),
+      name: last.name,
+      dose: last.dose,
+      everyHours: last.everyHours,
+    };
+    app.upsert("health", h.id, h);
+  };
   const [filter, setFilter] = useState<"todos" | HealthKind>("todos");
   const [editing, setEditing] = useState<HealthEntry | null>(null);
   const [adding, setAdding] = useState<HealthKind | null>(null);
@@ -100,6 +132,44 @@ export function HealthScreen({ app, go }: ScreenProps) {
           ))}
         </div>
       </section>
+
+      {inUse.length > 0 && (
+        <section className="glass p-4">
+          <p className="font-semibold mb-3 px-1">Remédios em uso</p>
+          <ul className="space-y-3">
+            {inUse.map((h) => {
+              const due = h.timestamp + (h.everyHours ?? 0) * 3600000;
+              const late = nowTs >= due;
+              return (
+                <li key={h.id} className="flex items-center gap-3">
+                  <span className="icon-badge w-10 h-10">
+                    <Icon name="pill" className="w-[18px] h-[18px]" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold truncate">
+                      {h.name}
+                      {h.dose ? ` • ${h.dose}` : ""}
+                    </p>
+                    <p className="text-xs text-[var(--muted)]">
+                      Última às {formatClock(h.timestamp)}
+                      {h.by ? ` por ${h.by}` : ""} •{" "}
+                      <span className={late ? "text-amber-300 font-semibold" : ""}>
+                        {late ? `atrasado ${formatDur(Math.floor((nowTs - due) / 1000))}` : `próxima às ${formatClock(due)}`}
+                      </span>
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => (tooSoon(h, Date.now()) ? setDosePending(h) : giveDose(h))}
+                    className="btn-ghost px-3 h-10 rounded-full text-sm font-semibold whitespace-nowrap"
+                  >
+                    Dei agora
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {health.some((h) => h.kind === "temperatura") && (
         <section className="glass p-4">
@@ -153,9 +223,35 @@ export function HealthScreen({ app, go }: ScreenProps) {
         Este app não substitui orientação médica. Dose de remédio e febre: siga sempre o que o pediatra indicou.
       </p>
 
+      {dosePending && (
+        <Sheet title="Já foi dado há pouco" onClose={() => setDosePending(null)}>
+          <p className="mb-4">
+            {dosePending.name} foi dado às <strong>{formatClock(dosePending.timestamp)}</strong>
+            {dosePending.by ? ` por ${dosePending.by}` : ""}, há {formatDur(Math.floor((Date.now() - dosePending.timestamp) / 1000))}. O intervalo combinado é de{" "}
+            {dosePending.everyHours} h. Dar de novo agora?
+          </p>
+          <button
+            onClick={() => {
+              giveDose(dosePending);
+              setDosePending(null);
+            }}
+            className="btn-grad w-full h-14 rounded-2xl font-semibold text-lg"
+          >
+            Registrar mesmo assim
+          </button>
+          <button
+            onClick={() => setDosePending(null)}
+            className="w-full h-12 mt-3 rounded-2xl font-semibold border border-[var(--stroke)] text-[var(--muted)]"
+          >
+            Cancelar
+          </button>
+        </Sheet>
+      )}
+
       {(adding || editing) && (
         <HealthForm
           initial={editing ?? undefined}
+          health={health}
           kind={editing?.kind ?? adding ?? "remedio"}
           onClose={() => {
             setAdding(null);
@@ -171,12 +267,14 @@ export function HealthScreen({ app, go }: ScreenProps) {
 
 function HealthForm({
   initial,
+  health,
   kind,
   onSave,
   onDelete,
   onClose,
 }: {
   initial?: HealthEntry;
+  health: HealthEntry[];
   kind: HealthKind;
   onSave: (h: HealthEntry) => void;
   onDelete: (id: string) => void;
@@ -190,6 +288,7 @@ function HealthForm({
   const [mood, setMood] = useState<Mood>(initial?.mood ?? "feliz");
   const [note, setNote] = useState(initial?.note ?? "");
   const [error, setError] = useState("");
+  const [repeatWarn, setRepeatWarn] = useState("");
 
   const save = () => {
     const h: HealthEntry = {
@@ -203,6 +302,17 @@ function HealthForm({
       h.name = name.trim();
       h.dose = dose.trim() || undefined;
       h.everyHours = toNum(every);
+      // aviso de dose repetida: mesmo remédio dado há menos de 75% do intervalo
+      if (!initial && !repeatWarn) {
+        const prev = health.find((x) => x.kind === "remedio" && x.name?.trim().toLowerCase() === h.name?.toLowerCase());
+        const hrs = h.everyHours ?? prev?.everyHours;
+        if (prev && hrs && Math.abs(h.timestamp - prev.timestamp) < hrs * 3600000 * 0.75) {
+          setRepeatWarn(
+            `${prev.name} já foi dado às ${formatClock(prev.timestamp)}${prev.by ? ` por ${prev.by}` : ""}. O intervalo é de ${hrs} h. Toque em “Registrar mesmo assim” para confirmar.`
+          );
+          return;
+        }
+      }
     } else if (kind === "temperatura") {
       const t = toNum(temp);
       if (t === undefined || t < 30 || t > 45) return setError("Informe uma temperatura válida, ex.: 37,2.");
@@ -272,7 +382,11 @@ function HealthForm({
       <Field label="Observação (opcional)">
         <input className="field" value={note} onChange={(e) => setNote(e.target.value)} />
       </Field>
-      <SheetActions onSave={save} error={error} onDelete={initial ? () => { onDelete(initial.id); onClose(); } : undefined} />
+      <SheetActions
+        onSave={save}
+        saveLabel={repeatWarn ? "Registrar mesmo assim" : "Salvar"}
+        error={repeatWarn || error}
+        onDelete={initial ? () => { onDelete(initial.id); onClose(); } : undefined} />
     </Sheet>
   );
 }

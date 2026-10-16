@@ -280,6 +280,28 @@ export function SettingsScreen({ app, go }: ScreenProps) {
             ]}
           />
         </Field>
+        <Field label="Avisar se ficar sem coco por …" group>
+          <Chips<number>
+            value={settings.alertPoopDays}
+            onChange={(v) => patch({ alertPoopDays: v })}
+            options={[
+              { value: 0, label: "Desligado" },
+              { value: 2, label: "2 dias" },
+              { value: 3, label: "3 dias" },
+              { value: 4, label: "4 dias" },
+              { value: 5, label: "5 dias" },
+            ]}
+          />
+          <p className="text-xs text-[var(--muted)] mt-2">
+            Cada bebê tem seu ritmo. Se o pediatra disse que é normal ficar alguns dias sem coco, deixe desligado ou escolha um valor maior.
+          </p>
+        </Field>
+        <Toggle
+          on={settings.alertDailySummary}
+          onChange={(v) => patch({ alertDailySummary: v })}
+          label="Resumo do dia às 21h"
+          hint="Um aviso à noite, no celular, com as mamadas, o sono e as fraldas do dia. Precisa ter ativado “Avisos no celular”."
+        />
         <Toggle
           on={prefs.notify}
           onChange={askNotify}

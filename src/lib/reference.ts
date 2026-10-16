@@ -75,6 +75,30 @@ export function growthBand(
 }
 
 /**
+ * Percentil aproximado (1–99) em relação à curva da OMS.
+ * Só temos -2, mediana e +2 desvios-padrão, então é uma estimativa: serve para dar noção, não para diagnóstico.
+ */
+export function growthPercentile(
+  sex: "menino" | "menina",
+  metric: GrowthMetric,
+  months: number,
+  value: number
+): number | null {
+  if (months < 0 || months > 12.5) return null;
+  const c = WHO[sex][metric];
+  const lo = curveAt(c.low, months);
+  const mid = curveAt(c.mid, months);
+  const hi = curveAt(c.high, months);
+  const z = value >= mid ? (2 * (value - mid)) / (hi - mid) : (-2 * (mid - value)) / (mid - lo);
+  // função de distribuição normal (aproximação de Abramowitz-Stegun)
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp((-z * z) / 2);
+  const tail = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  const p = z >= 0 ? 1 - tail : tail;
+  return Math.max(1, Math.min(99, Math.round(p * 100)));
+}
+
+/**
  * Janela de vigília típica (minutos acordado entre sonecas) por idade.
  * Valores médios de referência — cada bebê é diferente.
  */

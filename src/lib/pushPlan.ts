@@ -4,7 +4,23 @@
  * Cada aviso tem uma "chave" única; o servidor guarda as chaves já enviadas para não repetir.
  */
 
-export type PlanEvent = { id: string; type: string; timestamp: number };
+export type PlanEvent = {
+  id: string;
+  type: string;
+  timestamp: number;
+  duration?: number; // segundos
+  diaper?: string;
+  ml?: number;
+};
+export type PlanHealth = {
+  id: string;
+  kind?: string;
+  timestamp: number;
+  name?: string;
+  dose?: string;
+  everyHours?: number;
+  by?: string;
+};
 export type PlanVisit = {
   id: string;
   kind?: string;
@@ -26,9 +42,10 @@ export type PlanInput = {
   now: number;
   tz: string;
   name: string;
-  settings: { alertFeedHours?: number; alertFeedLeadMin?: number };
+  settings: { alertFeedHours?: number; alertFeedLeadMin?: number; alertPoopDays?: number; alertDailySummary?: boolean };
   timerActive: boolean;
   events: PlanEvent[]; // mais recentes primeiro (ou qualquer ordem)
+  health?: PlanHealth[];
   visits: PlanVisit[];
   vaccines: Record<string, PlanVaccine>;
   vaccineNames?: Record<string, string>;
@@ -90,7 +107,7 @@ function dur(min: number) {
 }
 
 export function planPushes(input: PlanInput): PlannedPush[] {
-  const { now, tz, name, settings, timerActive, events, visits, vaccines, vaccineNames = {} } = input;
+  const { now, tz, name, settings, timerActive, events, visits, vaccines, vaccineNames = {}, health = [] } = input;
   const out: PlannedPush[] = [];
 
   /* ---------- mamadas ---------- */
@@ -119,6 +136,64 @@ export function planPushes(input: PlanInput): PlannedPush[] {
           body: `Prevista para ${clockOf(dueAt, tz)} (intervalo de ${every}).`,
         });
       }
+    }
+  }
+
+  /* ---------- remédios com horário ---------- */
+  const lastDose = new Map<string, PlanHealth>();
+  for (const h of health) {
+    if (h.kind !== "remedio" || !h.everyHours || !h.name) continue;
+    const k = h.name.trim().toLowerCase();
+    const cur = lastDose.get(k);
+    if (!cur || h.timestamp > cur.timestamp) lastDose.set(k, h);
+  }
+  lastDose.forEach((h) => {
+    const due = h.timestamp + (h.everyHours ?? 0) * 3600000;
+    if (now >= due && now - due < 3 * 3600000) {
+      out.push({
+        key: `med:${h.id}:due`,
+        title: `Hora do remédio: ${h.name}`,
+        body: `${h.dose ? `${h.dose} • ` : ""}última dose às ${clockOf(h.timestamp, tz)}${h.by ? ` (${h.by})` : ""}.`,
+      });
+    }
+  });
+
+  /* ---------- tempo sem coco ---------- */
+  const poopDays = settings.alertPoopDays ?? 0;
+  if (poopDays > 0) {
+    const poops = events.filter((e) => e.type === "fralda" && e.diaper !== "molhada");
+    const lastPoop = poops.reduce<PlanEvent | null>((a, e) => (!a || e.timestamp > a.timestamp ? e : a), null);
+    const hr = localHour(now, tz);
+    if (lastPoop && now - lastPoop.timestamp >= poopDays * DAY && hr >= 9 && hr < 22) {
+      out.push({
+        key: `poop:${lastPoop.id}:${poopDays}`,
+        title: `${name} está há ${poopDays} dias sem coco`,
+        body: `Último registrado em ${dayMonthOf(lastPoop.timestamp, tz)} às ${clockOf(lastPoop.timestamp, tz)}. Se ele estiver incomodado, converse com o pediatra.`,
+      });
+    }
+  }
+
+  /* ---------- resumo do dia (a partir das 21h) ---------- */
+  if (settings.alertDailySummary !== false && localHour(now, tz) >= 21) {
+    const today = localDay(now, tz);
+    const day = events.filter((e) => localDay(e.timestamp, tz) === today);
+    if (day.length > 0) {
+      const breast = day.filter((e) => e.type === "amamentacao");
+      const bottles = day.filter((e) => e.type === "mamadeira");
+      const sleepSec = day.filter((e) => e.type === "sono").reduce((a, e) => a + (e.duration || 0), 0);
+      const diapers = day.filter((e) => e.type === "fralda");
+      const poops = diapers.filter((e) => e.diaper !== "molhada").length;
+      const feeds = breast.length + bottles.length;
+      const pieces: string[] = [];
+      if (feeds > 0) {
+        const bm = Math.round(breast.reduce((a, e) => a + (e.duration || 0), 0) / 60);
+        const ml = bottles.reduce((a, e) => a + (e.ml || 0), 0);
+        const det = [bm > 0 ? `${bm} min no peito` : "", ml > 0 ? `${ml} ml` : ""].filter(Boolean).join(", ");
+        pieces.push(`${feeds} mamada${feeds === 1 ? "" : "s"}${det ? ` (${det})` : ""}`);
+      }
+      if (sleepSec > 0) pieces.push(`sono ${dur(sleepSec / 60)}`);
+      if (diapers.length > 0) pieces.push(`${diapers.length} fralda${diapers.length === 1 ? "" : "s"} (${poops} coco${poops === 1 ? "" : "s"})`);
+      out.push({ key: `daily:${today}`, title: `Resumo do dia — ${name}`, body: pieces.join(" • ") + "." });
     }
   }
 

@@ -293,7 +293,7 @@ html.night {
 }
 .print-area th,
 .print-area td {
-  padding: 6px 8px;
+  padding: 6px 5px;
   text-align: left;
   border-bottom: 1px solid rgba(167, 139, 250, 0.16);
   font-size: 0.8125rem;
