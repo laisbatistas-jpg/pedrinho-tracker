@@ -1,5 +1,10 @@
 export type Side = "esquerdo" | "direito";
 export type DiaperKind = "molhada" | "suja" | "mista";
+export type PoopColor = "amarela" | "mostarda" | "verde" | "marrom" | "preta" | "vermelha" | "esbranquicada";
+export type PoopTexture = "liquida" | "pastosa" | "normal" | "dura";
+export type PoopAmount = "pouco" | "medio" | "muito";
+/** Detalhes do coco (opcional) numa fralda suja ou mista. */
+export type Poop = { color?: PoopColor; texture?: PoopTexture; amount?: PoopAmount };
 export type EventType = "amamentacao" | "mamadeira" | "sono" | "fralda";
 
 /** Registro da rotina (mamada, mamadeira, sono, fralda). */
@@ -13,6 +18,7 @@ export type BabyEvent = {
   ml?: number; // mamadeira
   milk?: "materno" | "formula";
   diaper?: DiaperKind;
+  poop?: Poop; // detalhes do coco
   note?: string;
   by?: string; // quem registrou
 };

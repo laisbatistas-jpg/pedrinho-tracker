@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { Icon, type IconName } from "@/components/Icon";
-import { EventForm, Stat, Timeline } from "@/components/ui";
+import { EventForm, PoopFields, Sheet, SheetActions, Stat, Timeline } from "@/components/ui";
 import type { ScreenProps } from "@/lib/nav";
-import type { BabyEvent, DiaperKind } from "@/lib/types";
-import { diaperLabel, formatClock } from "@/lib/utils";
+import type { BabyEvent, DiaperKind, Poop } from "@/lib/types";
+import { diaperLabel, formatClock, formatDur, isPoop, poopSummary } from "@/lib/utils";
 
 const OPTIONS: { k: DiaperKind; label: string; icon: IconName }[] = [
   { k: "molhada", label: "Molhada", icon: "drop" },
@@ -13,14 +13,40 @@ const OPTIONS: { k: DiaperKind; label: string; icon: IconName }[] = [
   { k: "mista", label: "Mista", icon: "heart" },
 ];
 
+/** Janela que abre depois de registrar um coco, para anotar cor, consistência e quantidade. */
+function PoopSheet({ event, onSave, onClose }: { event: BabyEvent; onSave: (e: BabyEvent) => void; onClose: () => void }) {
+  const [poop, setPoop] = useState<Poop>(event.poop ?? {});
+  return (
+    <Sheet title="Como foi o coco?" onClose={onClose}>
+      <p className="text-sm text-[var(--muted)] mb-4">Opcional. Ajuda a perceber mudanças e a contar ao pediatra.</p>
+      <PoopFields value={poop} onChange={setPoop} />
+      <SheetActions
+        saveLabel="Salvar detalhes"
+        onSave={() => {
+          onSave({ ...event, poop: poop.color || poop.texture || poop.amount ? poop : undefined });
+          onClose();
+        }}
+      />
+      <button onClick={onClose} className="w-full h-12 mt-3 rounded-2xl font-semibold border border-[var(--stroke)] text-[var(--muted)]">
+        Pular
+      </button>
+    </Sheet>
+  );
+}
+
 export function DiapersScreen({ app }: ScreenProps) {
   const { diapersToday } = app;
+  const poopsToday = diapersToday.filter(isPoop);
+  const lastPoop = app.events.find(isPoop);
+  const sinceLastPoop = lastPoop && app.now ? Math.max(0, Math.floor((app.now - lastPoop.timestamp) / 1000)) : null;
+  const [poopFor, setPoopFor] = useState<BabyEvent | null>(null);
   const [editing, setEditing] = useState<BabyEvent | null>(null);
   const [adding, setAdding] = useState(false);
   const [flash, setFlash] = useState<DiaperKind | null>(null);
 
   const add = (k: DiaperKind) => {
-    app.addDiaper(k);
+    const ev = app.addDiaper(k);
+    if (k !== "molhada") setPoopFor(ev);
     setFlash(k);
     setTimeout(() => setFlash(null), 1200);
   };
@@ -51,6 +77,14 @@ export function DiapersScreen({ app }: ScreenProps) {
         </div>
       </section>
 
+      <Stat icon="diaper" value={poopsToday.length} label={poopsToday.length === 1 ? "coco hoje" : "cocos hoje"}>
+        <p className="text-xs text-[var(--muted)]">
+          {lastPoop
+            ? `Último às ${formatClock(lastPoop.timestamp)}${poopSummary(lastPoop.poop) ? ` • ${poopSummary(lastPoop.poop)}` : ""}${sinceLastPoop !== null ? ` • há ${formatDur(sinceLastPoop)}` : ""}`
+            : "Nenhum coco registrado ainda"}
+        </p>
+      </Stat>
+
       <Stat icon="diaper" value={diapersToday.length} label="fraldas hoje">
         {diapersToday[0] && (
           <p className="text-xs text-[var(--muted)]">
@@ -69,6 +103,7 @@ export function DiapersScreen({ app }: ScreenProps) {
         <Timeline events={diapersToday} empty="Nenhuma fralda hoje" onSelect={setEditing} />
       </section>
 
+      {poopFor && <PoopSheet event={poopFor} onSave={app.saveEvent} onClose={() => setPoopFor(null)} />}
       {adding && <EventForm defaultType="fralda" onSave={app.saveEvent} onClose={() => setAdding(false)} />}
       {editing && (
         <EventForm initial={editing} onSave={app.saveEvent} onDelete={app.deleteEvent} onClose={() => setEditing(null)} />

@@ -28,12 +28,23 @@ body {
   min-height: 100dvh;
   color: var(--text);
   font-family: var(--font-geist-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg-0);
+  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fundo fixo numa camada própria (o "background-attachment: fixed" deixa o iPhone borrado) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
     radial-gradient(900px 500px at 50% -10%, rgba(124, 58, 237, 0.22), transparent 60%),
     radial-gradient(700px 400px at 100% 40%, rgba(59, 130, 246, 0.1), transparent 60%),
     linear-gradient(180deg, var(--bg-1), var(--bg-0));
-  background-attachment: fixed;
-  overscroll-behavior-y: none;
 }
 
 button {
@@ -68,10 +79,13 @@ button:active {
 
 /* ---------- Texto com gradiente ---------- */
 .grad-text {
-  background: linear-gradient(90deg, #a78bfa 0%, #5b9bff 100%);
+  background: linear-gradient(90deg, #b9a4ff 0%, #7fb0ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  padding-bottom: 0.08em;
 }
 
 /* ---------- Botões ---------- */

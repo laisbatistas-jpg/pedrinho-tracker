@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "./Icon";
-import type { BabyEvent, DiaperKind, EventType, Side } from "@/lib/types";
+import type { BabyEvent, DiaperKind, EventType, Poop, Side } from "@/lib/types";
 import type { Alert } from "@/lib/app";
 import { OTHER_ROLES, PROFILES } from "@/lib/profiles";
 import {
@@ -13,6 +13,11 @@ import {
   formatTime,
   fromLocalInput,
   genId,
+  POOP_AMOUNTS,
+  POOP_COLORS,
+  POOP_TEXTURES,
+  poopSummary,
+  poopWarning,
   resizeImage,
   sideLabel,
   toLocalInput,
@@ -173,8 +178,39 @@ function eventSub(e: BabyEvent): string {
     case "sono":
       return e.endTimestamp ? `Até ${formatClock(e.endTimestamp)}` : "Dormiu";
     case "fralda":
-      return `${diaperLabel(e.diaper)} • Trocada`;
+      return `${diaperLabel(e.diaper)} • ${poopSummary(e.poop) || "Trocada"}`;
   }
+}
+
+/** Cor, textura e quantidade do coco. Tocar de novo na opção marcada desmarca. */
+export function PoopFields({ value, onChange }: { value: Poop; onChange: (p: Poop) => void }) {
+  const warn = poopWarning(value.color);
+  return (
+    <>
+      <Field label="Cor" group>
+        <Chips
+          value={value.color}
+          onChange={(v) => onChange({ ...value, color: value.color === v ? undefined : v })}
+          options={POOP_COLORS}
+        />
+      </Field>
+      {warn && <p className="text-sm text-amber-300 -mt-2 mb-4">{warn}</p>}
+      <Field label="Consistência" group>
+        <Chips
+          value={value.texture}
+          onChange={(v) => onChange({ ...value, texture: value.texture === v ? undefined : v })}
+          options={POOP_TEXTURES}
+        />
+      </Field>
+      <Field label="Quantidade" group>
+        <Chips
+          value={value.amount}
+          onChange={(v) => onChange({ ...value, amount: value.amount === v ? undefined : v })}
+          options={POOP_AMOUNTS}
+        />
+      </Field>
+    </>
+  );
 }
 
 export function Timeline({
@@ -447,6 +483,7 @@ export function EventForm({
   const [ml, setMl] = useState(initial?.ml ? String(initial.ml) : "120");
   const [milk, setMilk] = useState<"materno" | "formula">(initial?.milk ?? "materno");
   const [diaper, setDiaper] = useState<DiaperKind>(initial?.diaper ?? "molhada");
+  const [poop, setPoop] = useState<Poop>(initial?.poop ?? {});
   const [note, setNote] = useState(initial?.note ?? "");
   const [error, setError] = useState("");
 
@@ -476,6 +513,7 @@ export function EventForm({
       base.duration = Math.round((te - ts) / 1000);
     } else {
       base.diaper = diaper;
+      if (diaper !== "molhada" && (poop.color || poop.texture || poop.amount)) base.poop = poop;
     }
     onSave(base);
     onClose();
@@ -557,6 +595,7 @@ export function EventForm({
           />
         </Field>
       )}
+      {type === "fralda" && diaper !== "molhada" && <PoopFields value={poop} onChange={setPoop} />}
 
       <Field label="Observação (opcional)">
         <input className="field" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Ex.: mamou pouco" />

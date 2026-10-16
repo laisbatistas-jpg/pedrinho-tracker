@@ -84,7 +84,7 @@ export default function Home() {
         <button
           onClick={() => go("inicio")}
           aria-label="Ir para o início"
-          className="w-14 h-14 rounded-full overflow-hidden grid place-items-center text-3xl bg-gradient-to-br from-violet-500/30 to-indigo-900/60 border-2 border-[var(--violet-deep)] shadow-[0_0_24px_-4px_rgba(124,58,237,0.7)]"
+          className="w-14 h-14 rounded-full overflow-hidden grid place-items-center text-3xl bg-gradient-to-br from-violet-500/30 to-indigo-900/60 border-2 border-[var(--violet-deep)] shadow-[0_0_12px_-4px_rgba(124,58,237,0.6)]"
         >
           {settings.photo ? (
             // eslint-disable-next-line @next/next/no-img-element

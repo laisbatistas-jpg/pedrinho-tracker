@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import { Chips, EventForm, Field, Sheet, SheetActions, Timeline } from "@/components/ui";
 import type { ScreenProps } from "@/lib/nav";
 import type { BabyEvent, Side } from "@/lib/types";
-import { formatClock, formatTime, sideLabel } from "@/lib/utils";
+import { formatClock, formatDur, formatTime, genId, sideLabel } from "@/lib/utils";
 
 export function SideButton({
   side,
@@ -90,6 +90,92 @@ export function BottleSheet({
   );
 }
 
+/** Registrar uma mamada que já aconteceu, só informando os minutos de cada lado. */
+function QuickFeedSheet({ onClose, onSave }: { onClose: () => void; onSave: (evs: BabyEvent[]) => void }) {
+  const [left, setLeft] = useState("");
+  const [right, setRight] = useState("");
+  const [ago, setAgo] = useState(0); // terminou há X minutos
+  const [error, setError] = useState("");
+  const presets = [5, 10, 15, 20, 30];
+
+  const block = (label: string, value: string, set: (v: string) => void) => (
+    <Field label={`${label} (minutos)`} group>
+      <div className="flex flex-wrap gap-2 mb-2">
+        {presets.map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => set(value === String(m) ? "" : String(m))}
+            className={`chip ${value === String(m) ? "chip-on" : ""}`}
+          >
+            {m} min
+          </button>
+        ))}
+      </div>
+      <input
+        inputMode="numeric"
+        className="field"
+        value={value}
+        onChange={(e) => set(e.target.value.replace(/[^0-9]/g, ""))}
+        placeholder="Outro valor, ou deixe vazio se não mamou"
+        aria-label={`${label}, minutos`}
+      />
+    </Field>
+  );
+
+  return (
+    <Sheet title="Registrar mamada" onClose={onClose}>
+      <p className="text-sm text-[var(--muted)] mb-4">Para quando você esqueceu de ligar o cronômetro.</p>
+      {block("Seio esquerdo", left, setLeft)}
+      {block("Seio direito", right, setRight)}
+      <Field label="Quando terminou" group>
+        <Chips<number>
+          value={ago}
+          onChange={setAgo}
+          options={[
+            { value: 0, label: "Agora" },
+            { value: 10, label: "10 min atrás" },
+            { value: 20, label: "20 min atrás" },
+            { value: 30, label: "30 min atrás" },
+            { value: 60, label: "1 h atrás" },
+          ]}
+        />
+      </Field>
+      <SheetActions
+        saveLabel="Salvar mamada"
+        error={error}
+        onSave={() => {
+          const l = Number(left || 0);
+          const r = Number(right || 0);
+          if (l <= 0 && r <= 0) return setError("Informe os minutos de pelo menos um lado.");
+          if (l > 120 || r > 120) return setError("Confira os minutos: o máximo é 120 por lado.");
+          const end = Date.now() - ago * 60000;
+          const parts = [
+            { side: "esquerdo" as Side, min: l },
+            { side: "direito" as Side, min: r },
+          ].filter((x) => x.min > 0);
+          const total = parts.reduce((a, x) => a + x.min, 0);
+          let t = end - total * 60000;
+          const evs: BabyEvent[] = parts.map((x) => {
+            const ev: BabyEvent = {
+              id: genId(),
+              type: "amamentacao",
+              side: x.side,
+              timestamp: t,
+              duration: x.min * 60,
+              endTimestamp: t + x.min * 60000,
+            };
+            t += x.min * 60000;
+            return ev;
+          });
+          onSave(evs);
+          onClose();
+        }}
+      />
+    </Sheet>
+  );
+}
+
 const RING_R = 104;
 const RING_C = 2 * Math.PI * RING_R;
 
@@ -98,9 +184,13 @@ export function FeedScreen({ app, go }: ScreenProps) {
   const [bottleOpen, setBottleOpen] = useState(false);
   const [editing, setEditing] = useState<BabyEvent | null>(null);
   const [adding, setAdding] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   const live = timer?.type === "amamentacao" ? timer : null;
+  const sideSec = (side: Side) => breastToday.filter((e) => e.side === side).reduce((a, e) => a + (e.duration || 0), 0);
+  const totalBreastSec = breastToday.reduce((a, e) => a + (e.duration || 0), 0);
+  const avgBreastSec = breastToday.length ? Math.round(totalBreastSec / breastToday.length) : 0;
   const progress = (elapsed % 1200) / 1200; // uma volta a cada 20 min
 
   return (
@@ -195,6 +285,15 @@ export function FeedScreen({ app, go }: ScreenProps) {
 
       {!live && (
         <button
+          onClick={() => setQuickOpen(true)}
+          className="btn-ghost w-full mt-4 h-14 rounded-2xl flex items-center justify-center gap-2.5 font-semibold"
+        >
+          <Icon name="clock" className="w-5 h-5" /> Registrar mamada sem cronômetro
+        </button>
+      )}
+
+      {!live && (
+        <button
           onClick={() => setBottleOpen(true)}
           className="btn-ghost w-full mt-4 h-14 rounded-2xl flex items-center justify-center gap-2.5 font-semibold"
         >
@@ -231,6 +330,24 @@ export function FeedScreen({ app, go }: ScreenProps) {
             <Icon name="plus" className="w-5 h-5" />
           </button>
         </div>
+        {breastToday.length > 0 && (
+          <div className="grid grid-cols-3 gap-2 my-3 text-center">
+            <div className="rounded-2xl bg-white/5 py-2.5">
+              <p className="font-bold tabular-nums">{formatDur(totalBreastSec)}</p>
+              <p className="text-[11px] text-[var(--muted)]">no peito hoje</p>
+            </div>
+            <div className="rounded-2xl bg-white/5 py-2.5">
+              <p className="font-bold tabular-nums">{formatDur(avgBreastSec)}</p>
+              <p className="text-[11px] text-[var(--muted)]">média por mamada</p>
+            </div>
+            <div className="rounded-2xl bg-white/5 py-2.5">
+              <p className="font-bold tabular-nums text-sm leading-6">
+                E {Math.round(sideSec("esquerdo") / 60)} • D {Math.round(sideSec("direito") / 60)} min
+              </p>
+              <p className="text-[11px] text-[var(--muted)]">por lado</p>
+            </div>
+          </div>
+        )}
         <Timeline
           events={app.feedsToday}
           empty="Nenhuma mamada hoje"
@@ -240,6 +357,9 @@ export function FeedScreen({ app, go }: ScreenProps) {
 
       {bottleOpen && (
         <BottleSheet onClose={() => setBottleOpen(false)} onSave={(ml, milk) => app.addBottle(ml, milk)} />
+      )}
+      {quickOpen && (
+        <QuickFeedSheet onClose={() => setQuickOpen(false)} onSave={(evs) => evs.forEach((e) => app.saveEvent(e))} />
       )}
       {adding && (
         <EventForm defaultType="amamentacao" onSave={app.saveEvent} onClose={() => setAdding(false)} />

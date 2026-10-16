@@ -116,6 +116,7 @@ export function useApp() {
     (kind: DiaperKind) => {
       const e: BabyEvent = { id: genId(), type: "fralda", diaper: kind, timestamp: Date.now() };
       upsert("event", e.id, e);
+      return e;
     },
     [upsert]
   );

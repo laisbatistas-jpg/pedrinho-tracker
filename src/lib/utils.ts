@@ -1,4 +1,4 @@
-import type { BabyEvent, DiaperKind, Side } from "./types";
+import type { BabyEvent, DiaperKind, Poop, PoopAmount, PoopColor, PoopTexture, Side } from "./types";
 
 export const pad = (n: number) => n.toString().padStart(2, "0");
 
@@ -33,6 +33,46 @@ export const sideLabel = (s?: Side) => (s === "esquerdo" ? "Esquerdo" : "Direito
 
 export const diaperLabel = (d?: DiaperKind) =>
   d === "molhada" ? "Molhada" : d === "suja" ? "Suja" : "Mista";
+
+export const POOP_COLORS: { value: PoopColor; label: string }[] = [
+  { value: "amarela", label: "Amarela" },
+  { value: "mostarda", label: "Mostarda" },
+  { value: "verde", label: "Verde" },
+  { value: "marrom", label: "Marrom" },
+  { value: "preta", label: "Preta" },
+  { value: "vermelha", label: "Com sangue" },
+  { value: "esbranquicada", label: "Esbranquiçada" },
+];
+export const POOP_TEXTURES: { value: PoopTexture; label: string }[] = [
+  { value: "liquida", label: "Líquida" },
+  { value: "pastosa", label: "Pastosa" },
+  { value: "normal", label: "Normal" },
+  { value: "dura", label: "Dura" },
+];
+export const POOP_AMOUNTS: { value: PoopAmount; label: string }[] = [
+  { value: "pouco", label: "Pouco" },
+  { value: "medio", label: "Médio" },
+  { value: "muito", label: "Muito" },
+];
+
+/** Fralda com coco (suja ou mista). */
+export const isPoop = (e: BabyEvent) => e.type === "fralda" && e.diaper !== "molhada";
+
+export function poopSummary(p?: Poop): string {
+  if (!p) return "";
+  const parts = [
+    POOP_COLORS.find((c) => c.value === p.color)?.label,
+    POOP_TEXTURES.find((t) => t.value === p.texture)?.label,
+    POOP_AMOUNTS.find((a) => a.value === p.amount)?.label,
+  ].filter(Boolean) as string[];
+  return parts.join(", ").toLowerCase().replace(/^./, (c) => c.toUpperCase());
+}
+
+/** Cores que merecem atenção do pediatra. */
+export const poopWarning = (c?: PoopColor) =>
+  c === "vermelha" || c === "esbranquicada" || c === "preta"
+    ? "Fezes com sangue, esbranquiçadas ou pretas (depois dos primeiros dias de vida) merecem avisar o pediatra."
+    : "";
 
 export const WEEKDAY_LETTER = ["D", "S", "T", "Q", "Q", "S", "S"];
 
