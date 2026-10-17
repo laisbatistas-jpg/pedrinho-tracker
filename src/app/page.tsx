@@ -80,7 +80,7 @@ export default function Home() {
 
   return (
     <div className="max-w-md mx-auto min-h-dvh flex flex-col">
-      <header className="px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-3 flex items-center gap-3.5 no-print">
+      <header className="px-5 pt-[calc(env(safe-area-inset-top,0px)+2rem)] pb-3 flex items-center gap-3.5 no-print">
         <button
           onClick={() => go("inicio")}
           aria-label="Ir para o início"
