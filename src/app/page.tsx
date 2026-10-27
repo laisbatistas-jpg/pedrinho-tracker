@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Icon, type IconName } from "@/components/Icon";
+import { NoiseButton } from "@/components/NoiseButton";
 import { HomeScreen } from "@/components/screens/Home";
 import { FeedScreen } from "@/components/screens/Feed";
 import { SleepScreen } from "@/components/screens/Sleep";
@@ -138,6 +139,8 @@ export default function Home() {
         {screen === "relatorio" && <ReportScreen {...props} />}
         {screen === "config" && <SettingsScreen {...props} />}
       </main>
+
+      <NoiseButton />
 
       <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-3 nav-safe z-20 no-print">
         <div className="glass !rounded-[1.75rem] !bg-[rgba(14,19,40,0.82)] flex justify-between p-1.5">
