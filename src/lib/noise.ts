@@ -9,7 +9,7 @@
 import { useSyncExternalStore } from "react";
 
 export type NoiseKind =
-  | "branco" | "rosa" | "marrom" | "chuva" | "ventilador" | "secador" | "shhh" | "mar" | "carro" | "utero";
+  | "branco" | "rosa" | "marrom" | "chuva" | "ventilador" | "secador" | "shhh" | "mar" | "carro" | "utero" | "shhritmo";
 
 export type NoisePrefs = { kind: NoiseKind; volume: number; minutes: number };
 type State = { playing: boolean; endAt: number | null; prefs: NoisePrefs };
@@ -27,6 +27,7 @@ const KIND_LABEL: Record<NoiseKind, string> = {
   mar: "Ondas do mar",
   carro: "Viagem de carro",
   utero: "Barriguinha",
+  shhritmo: "Shh. Shh. Shh",
 };
 
 let state: State = { playing: false, endAt: null, prefs: DEFAULTS };
@@ -168,6 +169,19 @@ function genSamples(kind: NoiseKind, n: number): Float32Array {
       // "shhh" que vai e volta, no ritmo de uma respiração calma
       const d = filt(white(n), "bp", 3200, 0.9, 2);
       for (let i = 0; i < n; i++) d[i] *= 0.3 + 0.7 * (0.5 - 0.5 * Math.cos(TAU * 2 * t(i)));
+      return d;
+    }
+    case "shhritmo": {
+      // "shh… shh… shh…" um por segundo (60 por minuto), com pausa curta entre eles
+      const hiss = mix(n, [filt(white(n), "bp", 2900, 0.8, 2), 1], [filt(pink(n), "bp", 1400, 0.7), 0.35]);
+      const d = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        const ph = (i % RATE) / RATE; // segundos desde o começo de cada "shh"
+        const up = Math.min(1, ph / 0.13);
+        const down = ph < 0.3 ? 1 : Math.max(0, 1 - (ph - 0.3) / 0.32);
+        const env = 0.03 + Math.pow(Math.sin((up * Math.PI) / 2), 2) * Math.pow(down, 1.5);
+        d[i] = hiss[i] * env;
+      }
       return d;
     }
     case "mar": {
