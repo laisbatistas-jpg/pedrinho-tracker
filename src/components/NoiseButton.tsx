@@ -24,13 +24,14 @@ export function NoiseButton() {
         onClick={toggleNoise}
         aria-label={playing ? "Parar o ruído branco" : "Ligar o ruído branco"}
         aria-pressed={playing}
-        className={`pointer-events-auto ml-auto flex items-center gap-2 rounded-full h-12 shadow-lg border border-white/15 backdrop-blur ${
-          playing ? "btn-green pl-3.5 pr-4" : "bg-[rgba(14,19,40,0.88)] text-[#d9ccff] w-12 justify-center"
+        className={`pointer-events-auto ml-auto flex items-center gap-2 rounded-full h-14 shadow-lg border border-white/25 ${
+          playing ? "btn-green pl-4 pr-5" : "btn-grad pl-4 pr-5 shadow-[0_0_22px_-2px_rgba(139,92,246,0.85)]"
         }`}
       >
-        <Icon name={playing ? "stop" : "waves"} className={playing ? "w-4 h-4" : "w-6 h-6"} />
+        <Icon name={playing ? "stop" : "waves"} className={playing ? "w-5 h-5" : "w-7 h-7"} />
+        {!playing && <span className="text-[15px] font-bold leading-none">Som</span>}
         {playing && (
-          <span className="text-sm font-semibold leading-none text-left">
+          <span className="text-[15px] font-bold leading-none text-left">
             {noiseLabel(prefs.kind)}
             {left > 0 && <span className="block text-[11px] font-normal opacity-90 mt-0.5">desliga em {left} min</span>}
           </span>
