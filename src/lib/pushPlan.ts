@@ -225,7 +225,7 @@ export function planPushes(input: PlanInput): PlannedPush[] {
       out.push({
         key: `dev:${age.months}`,
         title: `${name} fez ${age.months} ${age.months === 1 ? "mês" : "meses"}!`,
-        body: `Nova janela de desenvolvimento: ${w.tema}. Veja os marcos e os estímulos do mês.`,
+        body: `Nova janela de desenvolvimento: ${w.tema}. Veja os estímulos e os marcos do mês.`,
       });
     }
   }

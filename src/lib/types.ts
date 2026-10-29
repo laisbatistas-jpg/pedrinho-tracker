@@ -162,6 +162,7 @@ export type Settings = {
   alertPoopDays: number; // avisar se passar X dias sem coco (0 = desligado)
   alertDailySummary: boolean; // aviso à noite com o resumo do dia
   devChecks?: Record<string, "sim" | "comecando">; // marcos do desenvolvimento já vistos (id do marco)
+  devDid?: Record<string, number>; // estímulos já feitos: "mês-posição" -> quando
 };
 
 export const DEFAULT_SETTINGS: Settings = {

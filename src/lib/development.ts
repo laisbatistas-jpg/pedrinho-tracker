@@ -568,6 +568,163 @@ export const DEV_MONTHS: DevMonth[] = [
   ),
 ];
 
+/** Mais ideias de estímulo para cada mês (somam às de cima). */
+const EXTRA: Record<number, A[]> = {
+  0: [
+    ["Cartões de contraste", "Mostre desenhos simples em preto e branco, bem pertinho do rosto, por 1 ou 2 minutos, e veja se ele olha.", "Visão"],
+    ["Massagem depois do banho", "Com as mãos mornas e um hidratante, faça movimentos lentos nos braços, pernas e barriguinha, falando baixinho.", "Vínculo e consciência do corpo"],
+    ["Cantiga sempre igual", "Escolha uma música para antes de dormir e cante sempre a mesma.", "Rotina e acalmar"],
+    ["Troca de fralda sem pressa", "Olhe nos olhos e conte cada passo: \"agora a perninha\".", "Fala e confiança"],
+  ],
+  1: [
+    ["Chocalho de lado a lado", "Agite um chocalho suave de um lado e do outro, longe do rosto, e veja se ele vira a cabeça para o som.", "Audição"],
+    ["Passeio no colo pela casa", "Mostre a janela, as plantas e os quadros e diga o nome de cada coisa.", "Olhar e vocabulário"],
+    ["Perninhas livres", "Deixe-o alguns minutos sem fralda sobre uma manta, em lugar aquecido, para chutar à vontade.", "Movimento das pernas"],
+    ["Música suave", "Toque música calma em volume baixo enquanto vocês ficam juntos.", "Audição e calma"],
+  ],
+  2: [
+    ["Espelho no colo", "Segure-o diante de um espelho seguro para que veja o próprio rosto e o seu.", "Atenção ao rosto"],
+    ["Cantiga com o rosto", "Cante tocando de leve no nariz, na boca e nas bochechas, dizendo o nome de cada parte.", "Corpo e linguagem"],
+    ["Banho brincado", "Na água morna, converse e deixe que mexa as perninhas. Nunca o deixe sozinho.", "Sentidos e relaxamento"],
+    ["Passeio de sons", "Ao ar livre, pare para escutar o passarinho, o vento e o carro, e comente baixinho.", "Audição"],
+  ],
+  3: [
+    ["Chocalho nas mãos", "Coloque um chocalho leve na mão dele e ajude a balançar. Depois, deixe que tente.", "Segurar e coordenar"],
+    ["Mãozinhas à mostra", "Toque nas mãos dele, aproxime do rosto e diga: \"são as suas mãozinhas\".", "Consciência do corpo"],
+    ["Ginástica de bracinhos", "Mova braços e pernas devagar, cantando, abrindo e fechando.", "Flexibilidade"],
+    ["Cantiga com gestos", "Guie as mãos dele em \"cabeça, ombro, joelho e pé\" ou outra música.", "Movimento e ritmo"],
+  ],
+  4: [
+    ["Texturas diferentes", "Passe um pano macio, um pano áspero e um papel que faz barulho nas mãos e nos pés dele, observando as reações.", "Tato"],
+    ["Livro de pano", "Deixe-o segurar, olhar e levar à boca um livro de pano limpo, enquanto você nomeia as figuras.", "Linguagem e exploração"],
+    ["Mordedor limpo", "Ofereça um mordedor ou brinquedo limpo para ele levar à boca.", "Exploração com a boca"],
+    ["Sentado no colo", "Segure-o sentadinho no colo olhando o ambiente e comente o que ele vê.", "Equilíbrio e atenção"],
+  ],
+  5: [
+    ["Rolar com brinquedo", "Deitado de costas, coloque um brinquedo ao lado para ele se virar até pegar.", "Rolar"],
+    ["Chocalho que chama", "Sacuda um chocalho em lados diferentes para ele procurar o som.", "Audição e atenção"],
+    ["Água no banho", "Com um copinho, derrame água devagar nas mãos e nos pés dele.", "Tato"],
+    ["Livro com figuras", "Mostre figuras de bichos e objetos, aponte e nomeie com voz animada.", "Vocabulário"],
+  ],
+  6: [
+    ["Sentado com apoio", "Segure-o sentado e coloque um brinquedo perto dos pés para que ele se incline e alcance.", "Equilíbrio do tronco"],
+    ["Livros de páginas grossas", "Aponte e nomeie rostos, carros e bichos, e deixe que ele toque.", "Linguagem"],
+    ["Papel que faz barulho", "Sob supervisão, deixe-o mexer em papel que amassa, sem rasgar na boca.", "Sons e tato"],
+    ["Cavalinho no joelho", "Balance-o suavemente nos joelhos, cantando uma cantiga com ritmo.", "Equilíbrio e alegria"],
+  ],
+  7: [
+    ["Cavalinho e acabou", "Balance-o no joelho e pare de repente, esperando o sorriso e o pedido de \"mais\".", "Antecipar e pedir"],
+    ["Chamar pelo nome", "Chame de lugares diferentes da sala e espere que ele se vire.", "Atenção ao nome"],
+    ["Copinhos no banho", "Dê copinhos e jarrinhos para encher, virar e despejar.", "Coordenação e sentidos"],
+    ["Passar o brinquedo", "Ofereça um brinquedo, peça de volta com \"me dá\" e devolva, agradecendo.", "Revezar"],
+  ],
+  8: [
+    ["Cesta do tesouro", "Reúna objetos seguros de casa (colher de madeira, esponja, tampa de panela) numa cesta, para ele explorar sentado.", "Curiosidade e sentidos"],
+    ["Sons de bichos", "Mostre figuras e imite os sons: \"au-au\", \"miau\".", "Imitação e fala"],
+    ["Cadê o bebê?", "Cubra o rosto dele com um paninho leve e tire dizendo \"achou!\".", "Antecipar e se divertir"],
+    ["Livro de bichos", "Leia sempre o mesmo livro e aponte cada figura.", "Linguagem e memória"],
+  ],
+  9: [
+    ["Bateria de panelas", "Dê uma panela e uma colher de pau para fazer barulho.", "Causa e efeito, ritmo"],
+    ["Engatinhar atrás da bola", "Role uma bola e incentive que vá atrás dela.", "Engatinhar"],
+    ["Tchau para tudo", "Acene \"tchau\" para o vizinho, o carro e a lua, sempre com o gesto.", "Gestos e palavras"],
+    ["Cadê o brinquedo?", "Esconda o brinquedo debaixo de um pano na frente dele e deixe que descubra.", "Pensar e memória"],
+  ],
+  10: [
+    ["Bola rolando", "Role uma bola grande e chame para pegar e devolver.", "Movimento e revezar"],
+    ["Dar e receber", "Peça \"me dá\", estenda a mão e agradeça quando ele entregar.", "Compreensão de pedidos"],
+    ["Palminhas e cantigas", "Cante músicas com gestos como \"parabéns\" e \"pó-pó-pó\".", "Imitação"],
+    ["Explorar o chão", "Espalhe brinquedos seguros para que escolha e engatinhe até eles.", "Engatinhar e escolher"],
+  ],
+  11: [
+    ["Andando de lado", "Coloque um brinquedo no sofá do outro lado dele para andar apoiado até pegar.", "Equilíbrio e passos"],
+    ["Cadê o sapato?", "Pergunte pelo nome de objetos que ele conhece e deixe que aponte ou olhe.", "Compreensão"],
+    ["Dançar de mãos dadas", "Segure as mãos dele e dancem juntos ao som de uma música.", "Equilíbrio e alegria"],
+    ["Imitar gestos", "Bata palmas, mande beijo, faça \"tchau\" e espere que ele copie.", "Imitação"],
+  ],
+  12: [
+    ["Livro, uma frase por página", "Leia livros curtos apontando as figuras e dizendo uma frase por página.", "Linguagem"],
+    ["Caçar bolhas", "Sopre bolhas de sabão para que ele corra, engatinhe ou tente pegar.", "Movimento e foco"],
+    ["Caminhar de mãos dadas", "Ande pela casa de mãos dadas, devagar, comentando o que vê.", "Equilíbrio"],
+    ["Mostrar e nomear", "Quando ele apontar algo, nomeie: \"sim, é um cachorro\".", "Vocabulário"],
+  ],
+  13: [
+    ["Carrinho para empurrar", "Ofereça um carrinho firme de empurrar ou um carrinho de boneca para treinar a caminhada.", "Andar com firmeza"],
+    ["Caixa surpresa", "Coloque brinquedos numa caixa e tire um a um, nomeando.", "Curiosidade e vocabulário"],
+    ["Contar pela janela", "Mostre o que acontece lá fora e descreva: \"carro\", \"gato\", \"gente\".", "Vocabulário"],
+    ["Rolar e pegar a bola", "Sentados no chão, rolem uma bola um para o outro.", "Coordenação e revezar"],
+  ],
+  14: [
+    ["Giz de cera grosso", "Dê papel grande e giz de cera grosso para rabiscar à vontade.", "Coordenação fina"],
+    ["Sons dos bichos", "Mostre figuras e pergunte: \"como faz a vaca?\".", "Fala e imitação"],
+    ["Casinha de caixa", "Use uma caixa grande de papelão como casinha ou túnel.", "Imaginação e movimento"],
+    ["Instrumentos simples", "Ofereça um tambor ou chocalho para tocar junto com músicas.", "Ritmo"],
+  ],
+  15: [
+    ["Torre de 2 ou 3 blocos", "Empilhe e deixe que ele derrube e tente também.", "Coordenação"],
+    ["Apontar no livro", "Pergunte: \"onde está a bola?\" e espere que ele aponte.", "Compreensão"],
+    ["Faz de conta com bichinhos", "Faça o ursinho dormir, comer e tomar banho.", "Imaginação"],
+    ["Jarras no banho", "Dê jarras e copos para despejar e encher.", "Sentidos e coordenação"],
+  ],
+  16: [
+    ["Caminhada de descobertas", "Num passeio, junte folhas, pedrinhas e gravetos e converse sobre cada um.", "Curiosidade e vocabulário"],
+    ["Cadê o brinquedo?", "Esconda um brinquedo debaixo de panos e peça que ele procure.", "Pensar e memória"],
+    ["Cantar e dançar", "Cantem e dancem juntos, e ele escolhe a música.", "Ritmo e escolha"],
+    ["Pintura com os dedos", "Com tinta atóxica e papel grande, deixe espalhar com as mãos.", "Criatividade e tato"],
+  ],
+  17: [
+    ["Torre de 4 blocos", "Empilhem juntos e comemorem quando a torre cair.", "Coordenação"],
+    ["Parquinho", "Escorregador e balanço com você por perto, para ele experimentar com segurança.", "Movimento e confiança"],
+    ["Livros do dia a dia", "Livros com figuras de objetos conhecidos: copo, sapato, bola.", "Vocabulário"],
+    ["Guardar brinquedos", "Cante uma música para guardar e peça que coloque os brinquedos na caixa.", "Rotina e cooperação"],
+  ],
+  18: [
+    ["Estourar bolhas", "Sopre bolhas de sabão para ele tentar estourar.", "Movimento e foco"],
+    ["Cozinhando", "Dê panelinhas e colheres para fazer comidinha de mentirinha.", "Faz de conta"],
+    ["Telefone de brinquedo", "Finja conversas ao telefone, passando para ele falar.", "Fala e imaginação"],
+    ["Encaixe grande", "Quebra-cabeça de peças grandes ou formas de encaixar, com ajuda.", "Resolver problemas"],
+  ],
+  19: [
+    ["Subir e descer", "Monte uma pequena trilha de almofadas para subir e descer, com você ao lado.", "Equilíbrio e força"],
+    ["Cantigas com gestos", "Escolha cantigas conhecidas e faça os gestos, convidando-o a repetir.", "Imitação e fala"],
+    ["Livros com rima", "Leia livros com rimas e deixe que complete a última palavra.", "Linguagem"],
+    ["Empurrar e puxar", "Ofereça carrinhos de empurrar e brinquedos de puxar com cordão.", "Coordenação"],
+  ],
+  20: [
+    ["Dar comida à boneca", "Faça a boneca comer, tomar banho e dormir, e deixe que ele conduza.", "Faz de conta"],
+    ["Pintar com pincel grosso", "Papel grande e tinta atóxica, com você por perto.", "Criatividade"],
+    ["Falar as cores", "No dia a dia, diga a cor das coisas: \"o copo azul\".", "Vocabulário"],
+    ["Pega-pega", "Corram devagar um atrás do outro rindo.", "Movimento e alegria"],
+  ],
+  21: [
+    ["Torre de blocos", "Empilhem juntos e conte os blocos em voz alta.", "Coordenação e números"],
+    ["Esconde-esconde", "Esconda-se perto e chame; ele vem procurar.", "Memória e movimento"],
+    ["Estátua", "Dancem e, quando a música parar, fiquem parados como estátuas.", "Atenção e controle do corpo"],
+    ["Histórias curtas", "Leia histórias com poucas frases e pergunte: \"o que ele está fazendo?\".", "Linguagem"],
+  ],
+  22: [
+    ["Quebra-cabeça de poucas peças", "Quebra-cabeças com 3 ou 4 peças grandes, com ajuda quando pedir.", "Resolver problemas"],
+    ["Caixa de fantasias", "Chapéus, lenços e roupas de adulto para brincar de ser outra pessoa.", "Imaginação"],
+    ["Pular", "Pule junto com ele, de pés juntos, para fora de um tapete e de volta.", "Equilíbrio e coordenação"],
+    ["Ajudar na cozinha", "Deixe-o lavar frutas ou mexer uma colher numa tigela, com você ao lado.", "Autonomia e participação"],
+  ],
+  23: [
+    ["Parlendas e rimas", "Brinque com parlendas e cantigas tradicionais, com gestos.", "Linguagem e memória"],
+    ["Hora do conto", "Escolha um livro antes de dormir e peça que escolha a história.", "Linguagem e vínculo"],
+    ["Linhas e círculos", "Mostre como fazer uma linha reta e depois um círculo com giz ou lápis grosso.", "Coordenação fina"],
+    ["Conversa do dia", "À noite, relembrem juntos o que fizeram: \"hoje fomos ao parque\".", "Memória e fala"],
+  ],
+  24: [
+    ["Rimas e músicas", "Cante e repita músicas com ele, parando antes da última palavra para ele completar.", "Linguagem"],
+    ["Faz de conta com personagens", "Brinque de médico, de casinha, de motorista.", "Imaginação"],
+    ["Formas e encaixes", "Quebra-cabeças e formas simples para encaixar.", "Resolver problemas"],
+    ["Correr e pular no parque", "Corram, chutem bola e pulem em espaço seguro.", "Movimento"],
+  ],
+};
+for (const m of DEV_MONTHS) {
+  for (const [titulo, como, treina] of EXTRA[m.month] ?? []) m.estimulos.push({ titulo, como, treina });
+}
+
 export const DEV_SOURCES: { nome: string; url: string }[] = [
   { nome: "CDC: Marcos do Desenvolvimento (português)", url: "https://www.cdc.gov/ncbddd/actearly/milestones/" },
   { nome: "Sociedade Brasileira de Pediatria: Cartilha de Desenvolvimento", url: "https://www.sbp.com.br/fileadmin/user_upload/_24327e-Cartilha_de_Desenvolvimento-2m-5anos_compressed.pdf" },

@@ -22,7 +22,7 @@ export function HomeScreen({ app, go }: ScreenProps) {
     .slice(0, 3);
   const devMonths = app.settings.birthDate && now ? completedMonths(app.settings.birthDate, now) : null;
   const dev = devMonths !== null ? devMonthFor(devMonths) : null;
-  const devDone = dev ? dev.marcos.filter((m) => app.settings.devChecks?.[m.id] === "sim").length : 0;
+  const devDone = dev ? dev.estimulos.filter((_, i) => app.settings.devDid?.[`${dev.month}-${i}`]).length : 0;
   const [bottleOpen, setBottleOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<BabyEvent | null>(null);
@@ -173,11 +173,11 @@ export function HomeScreen({ app, go }: ScreenProps) {
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-xs text-[var(--muted)]">
-              Janela de desenvolvimento • {dev.month === 0 ? "recém-nascido" : `${dev.month} ${dev.month === 1 ? "mês" : "meses"}`}
+              Estímulos do mês • {dev.month === 0 ? "recém-nascido" : `${dev.month} ${dev.month === 1 ? "mês" : "meses"}`}
             </span>
             <span className="block font-semibold leading-tight truncate">{dev.tema}</span>
             <span className="block text-xs text-[var(--muted)] mt-0.5">
-              {devDone} de {dev.marcos.length} marcos já feitos • ver estímulos
+              {devDone} de {dev.estimulos.length} estímulos feitos • ver o que fazer hoje
             </span>
           </span>
           <Icon name="chevron" className="w-5 h-5 text-[var(--muted)]" />

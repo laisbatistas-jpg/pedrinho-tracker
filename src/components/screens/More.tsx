@@ -4,6 +4,8 @@ import { Icon, type IconName } from "@/components/Icon";
 import type { Screen, ScreenProps } from "@/lib/nav";
 
 const ITEMS: { id: Screen; label: string; hint: string; icon: IconName }[] = [
+  { id: "sono", label: "Sono", hint: "Sonecas e noite", icon: "moon" },
+  { id: "fraldas", label: "Fraldas", hint: "Xixi, coco e detalhes", icon: "diaper" },
   { id: "emergencia", label: "Emergência", hint: "Ficha, telefones e resumo", icon: "alert" },
   { id: "stats", label: "Estatísticas", hint: "Gráficos da semana", icon: "chart" },
   { id: "historico", label: "Histórico", hint: "Dias anteriores", icon: "calendar" },
@@ -11,7 +13,6 @@ const ITEMS: { id: Screen; label: string; hint: string; icon: IconName }[] = [
   { id: "saude", label: "Saúde", hint: "Remédios, febre e humor", icon: "pill" },
   { id: "consultas", label: "Consultas", hint: "Agenda do pediatra e como foi", icon: "stethoscope" },
   { id: "vacinas", label: "Vacinas", hint: "Calendário do 1º ano", icon: "syringe" },
-  { id: "desenvolvimento", label: "Desenvolvimento", hint: "Estímulos e marcos mês a mês", icon: "smile" },
   { id: "marcos", label: "Marcos", hint: "Primeiras vezes e fotos", icon: "star" },
   { id: "sons", label: "Sons de ninar", hint: "Ruído branco e chuva", icon: "music" },
   { id: "relatorio", label: "Relatório", hint: "PDF para o pediatra", icon: "file" },

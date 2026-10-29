@@ -24,17 +24,16 @@ import { useApp } from "@/lib/app";
 import type { Screen } from "@/lib/nav";
 import { ageLabel, formatDayLong, formatDayShort } from "@/lib/utils";
 
-const TABS: { id: Screen; label: string; icon: IconName }[] = [
+const TABS: { id: Screen; label: string; icon: IconName; featured?: boolean }[] = [
   { id: "inicio", label: "Início", icon: "home" },
   { id: "amamentacao", label: "Mamada", icon: "feed" },
-  { id: "sono", label: "Sono", icon: "moon" },
-  { id: "fraldas", label: "Fraldas", icon: "diaper" },
+  { id: "desenvolvimento", label: "Estímulos", icon: "smile", featured: true },
   { id: "mais", label: "Mais", icon: "grid" },
 ];
 
 // telas que pertencem à aba "Mais"
 const MORE_SCREENS: Screen[] = [
-  "mais", "stats", "historico", "crescimento", "saude", "vacinas", "consultas", "emergencia", "marcos", "desenvolvimento", "sons", "relatorio", "config",
+  "mais", "sono", "fraldas", "stats", "historico", "crescimento", "saude", "vacinas", "consultas", "emergencia", "marcos", "sons", "relatorio", "config",
 ];
 
 export default function Home() {
@@ -149,8 +148,27 @@ export default function Home() {
           {TABS.map((tab) => {
             const active = activeTab === tab.id;
             const live =
-              (tab.id === "sono" && timer?.type === "sono") ||
+              (tab.id === "mais" && timer?.type === "sono") ||
               (tab.id === "amamentacao" && timer?.type === "amamentacao");
+            if (tab.featured) {
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => go(tab.id)}
+                  aria-current={active ? "page" : undefined}
+                  className="relative flex-1 flex flex-col items-center"
+                >
+                  <span
+                    className={`btn-grad -mt-7 w-[3.75rem] h-[3.75rem] rounded-full grid place-items-center border-4 border-[#0c1226] shadow-[0_0_22px_-2px_rgba(139,92,246,0.9)] ${
+                      active ? "ring-2 ring-white/70" : ""
+                    }`}
+                  >
+                    <Icon name={tab.icon} className="w-8 h-8" />
+                  </span>
+                  <span className={`text-[11px] font-bold mt-0.5 mb-1 ${active ? "text-white" : "text-[#d9ccff]"}`}>{tab.label}</span>
+                </button>
+              );
+            }
             return (
               <button
                 key={tab.id}

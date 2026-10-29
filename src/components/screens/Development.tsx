@@ -17,6 +17,13 @@ import {
 import { ageLabel } from "@/lib/utils";
 
 type Check = "sim" | "comecando";
+
+function sinceLabel(ts: number, now: number): string {
+  const days = Math.floor(((now || Date.now()) - ts) / 86400000);
+  if (days <= 0) return "hoje";
+  if (days === 1) return "ontem";
+  return `há ${days} dias`;
+}
 const AREA_ORDER: DevArea[] = ["mov", "soc", "ling", "cog"];
 
 export function DevelopmentScreen({ app, go }: ScreenProps) {
@@ -59,6 +66,15 @@ export function DevelopmentScreen({ app, go }: ScreenProps) {
     setCheck(id, cur === undefined ? "sim" : cur === "sim" ? "comecando" : undefined);
   };
 
+  const did = settings.devDid ?? {};
+  const setDid = (key: string, v: number | undefined) => {
+    const next = { ...did };
+    if (v) next[key] = v;
+    else delete next[key];
+    app.upsert<Settings>("settings", "main", { ...settings, devDid: next });
+  };
+  const didCount = d.estimulos.filter((_, i) => did[`${d.month}-${i}`]).length;
+
   const done = d.marcos.filter((m) => checks[m.id] === "sim").length;
   const starting = d.marcos.filter((m) => checks[m.id] === "comecando").length;
 
@@ -69,8 +85,8 @@ export function DevelopmentScreen({ app, go }: ScreenProps) {
   return (
     <div className="fade-in pt-2 space-y-4">
       <ScreenHeader
-        title="Desenvolvimento"
-        subtitle={settings.birthDate ? `${name} • ${ageLabel(settings.birthDate, now || Date.now())}` : "Estímulos mês a mês"}
+        title="Estímulos"
+        subtitle={settings.birthDate ? `${name} • ${ageLabel(settings.birthDate, now || Date.now())}` : "O que fazer com ele, mês a mês"}
         onBack={() => go("mais")}
       />
 
@@ -118,6 +134,64 @@ export function DevelopmentScreen({ app, go }: ScreenProps) {
         </div>
         <h3 className="grad-text text-2xl font-extrabold leading-tight">{d.tema}</h3>
         <p className="text-sm mt-2 leading-relaxed">{d.janela}</p>
+      </section>
+
+      <section className="glass p-5">
+        <div className="flex items-baseline justify-between mb-3">
+          <h3 className="font-semibold text-lg">Estímulos para {d.month === 0 ? "o recém-nascido" : `${d.month} ${d.month === 1 ? "mês" : "meses"}`}</h3>
+          <span className="text-xs text-[var(--muted)]">
+            {didCount} de {d.estimulos.length} feitos
+          </span>
+        </div>
+        <div className="rounded-2xl border border-[var(--violet)]/50 bg-[rgba(124,58,237,0.16)] p-3.5 mb-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#d9ccff]">Sugestão de hoje</p>
+          <p className="font-semibold mt-0.5">{today.titulo}</p>
+          <p className="text-sm mt-1 leading-relaxed">{today.como}</p>
+          <p className="text-xs text-[var(--muted)] mt-1.5">Treina: {today.treina}</p>
+        </div>
+        <ul className="divide-y divide-white/10">
+          {d.estimulos.map((e, i) => {
+            const key = `${d.month}-${i}`;
+            const when = did[key];
+            return (
+              <li key={key}>
+                <button
+                  onClick={() => setOpen(open === i ? null : i)}
+                  aria-expanded={open === i}
+                  className="w-full flex items-center gap-3 py-3 text-left"
+                >
+                  <span
+                    className={`shrink-0 w-6 h-6 rounded-full grid place-items-center border ${
+                      when ? "bg-[#5db77a] border-[#5db77a] text-[#0c1226]" : "border-white/25 text-transparent"
+                    }`}
+                    aria-hidden="true"
+                  >
+                    <Icon name="check" className="w-4 h-4" />
+                  </span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block font-semibold leading-tight">{e.titulo}</span>
+                    <span className="block text-xs text-[var(--muted)] mt-0.5">
+                      Treina: {e.treina}
+                      {when ? ` • feito ${sinceLabel(when, now)}` : ""}
+                    </span>
+                  </span>
+                  <Icon name="chevron" className={`w-4 h-4 text-[var(--muted)] transition-transform ${open === i ? "rotate-90" : ""}`} />
+                </button>
+                {open === i && (
+                  <div className="pb-3 -mt-1 pl-9">
+                    <p className="text-sm leading-relaxed">{e.como}</p>
+                    <button
+                      onClick={() => setDid(key, when ? undefined : Date.now())}
+                      className={`mt-2.5 rounded-full px-4 py-2 text-sm font-semibold ${when ? "border border-white/20 text-[var(--muted)]" : "btn-grad"}`}
+                    >
+                      {when ? "Desmarcar" : "Já fizemos hoje"}
+                    </button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <section className="glass p-5">
@@ -173,34 +247,6 @@ export function DevelopmentScreen({ app, go }: ScreenProps) {
             );
           })}
         </div>
-      </section>
-
-      <section className="glass p-5">
-        <h3 className="font-semibold text-lg mb-3">Estímulos do mês</h3>
-        <div className="rounded-2xl border border-[var(--violet)]/50 bg-[rgba(124,58,237,0.16)] p-3.5 mb-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-[#d9ccff]">Sugestão de hoje</p>
-          <p className="font-semibold mt-0.5">{today.titulo}</p>
-          <p className="text-sm mt-1 leading-relaxed">{today.como}</p>
-          <p className="text-xs text-[var(--muted)] mt-1.5">Treina: {today.treina}</p>
-        </div>
-        <ul className="divide-y divide-white/10">
-          {d.estimulos.map((e, i) => (
-            <li key={e.titulo}>
-              <button
-                onClick={() => setOpen(open === i ? null : i)}
-                aria-expanded={open === i}
-                className="w-full flex items-center gap-3 py-3 text-left"
-              >
-                <span className="flex-1 min-w-0">
-                  <span className="block font-semibold leading-tight">{e.titulo}</span>
-                  <span className="block text-xs text-[var(--muted)] mt-0.5">Treina: {e.treina}</span>
-                </span>
-                <Icon name="chevron" className={`w-4 h-4 text-[var(--muted)] transition-transform ${open === i ? "rotate-90" : ""}`} />
-              </button>
-              {open === i && <p className="text-sm leading-relaxed pb-3 -mt-1">{e.como}</p>}
-            </li>
-          ))}
-        </ul>
       </section>
 
       {d.cuidados.length > 0 && (
