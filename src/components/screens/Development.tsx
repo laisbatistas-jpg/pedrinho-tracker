@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
+import { Sequence } from "@/components/illus/Sequence";
 import { ScreenHeader } from "@/components/ui";
+import { DEV_ART } from "@/lib/devArt";
 import type { ScreenProps } from "@/lib/nav";
 import type { Settings } from "@/lib/types";
 import {
@@ -180,6 +182,7 @@ export function DevelopmentScreen({ app, go }: ScreenProps) {
                 {open === i && (
                   <div className="pb-3 -mt-1 pl-9">
                     <p className="text-sm leading-relaxed">{e.como}</p>
+                    {DEV_ART[`${d.month}:${e.titulo}`] && <Sequence panels={DEV_ART[`${d.month}:${e.titulo}`]} />}
                     <button
                       onClick={() => setDid(key, when ? undefined : Date.now())}
                       className={`mt-2.5 rounded-full px-4 py-2 text-sm font-semibold ${when ? "border border-white/20 text-[var(--muted)]" : "btn-grad"}`}
