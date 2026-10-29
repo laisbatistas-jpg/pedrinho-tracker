@@ -7,6 +7,7 @@ import { AlertList, EventForm, MiniBars, Stat, Timeline, WhoPicker } from "@/com
 import { BottleSheet, SideButton } from "./Feed";
 import type { ScreenProps } from "@/lib/nav";
 import type { BabyEvent } from "@/lib/types";
+import { completedMonths, devMonthFor } from "@/lib/development";
 import { countdownLabel, listAppointments, placeLine } from "@/lib/agenda";
 import { DAY, formatClock, formatDate, formatDur, formatTime, sideLabel } from "@/lib/utils";
 
@@ -19,6 +20,9 @@ export function HomeScreen({ app, go }: ScreenProps) {
   const agenda = listAppointments(app.visits, app.vaccines)
     .filter((a) => a.timestamp >= (now || 0) && a.timestamp <= (now || 0) + 30 * DAY)
     .slice(0, 3);
+  const devMonths = app.settings.birthDate && now ? completedMonths(app.settings.birthDate, now) : null;
+  const dev = devMonths !== null ? devMonthFor(devMonths) : null;
+  const devDone = dev ? dev.marcos.filter((m) => app.settings.devChecks?.[m.id] === "sim").length : 0;
   const [bottleOpen, setBottleOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<BabyEvent | null>(null);
@@ -161,6 +165,24 @@ export function HomeScreen({ app, go }: ScreenProps) {
       </section>
 
       <NapCard nap={app.nap} hasBirthDate={Boolean(app.settings.birthDate)} onSettings={() => go("config")} />
+
+      {dev && (
+        <button onClick={() => go("desenvolvimento")} className="glass w-full p-4 flex items-center gap-3 text-left">
+          <span className="icon-badge w-10 h-10">
+            <Icon name="smile" className="w-5 h-5" />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block text-xs text-[var(--muted)]">
+              Janela de desenvolvimento • {dev.month === 0 ? "recém-nascido" : `${dev.month} ${dev.month === 1 ? "mês" : "meses"}`}
+            </span>
+            <span className="block font-semibold leading-tight truncate">{dev.tema}</span>
+            <span className="block text-xs text-[var(--muted)] mt-0.5">
+              {devDone} de {dev.marcos.length} marcos já feitos • ver estímulos
+            </span>
+          </span>
+          <Icon name="chevron" className="w-5 h-5 text-[var(--muted)]" />
+        </button>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Stat icon="feed" value={feedsToday.length} label="mamadas hoje">

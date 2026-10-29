@@ -14,6 +14,7 @@ export type Screen =
   | "consultas"
   | "emergencia"
   | "marcos"
+  | "desenvolvimento"
   | "sons"
   | "relatorio"
   | "config";

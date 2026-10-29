@@ -4,6 +4,8 @@
  * Cada aviso tem uma "chave" única; o servidor guarda as chaves já enviadas para não repetir.
  */
 
+import { devMonthFor } from "./development";
+
 export type PlanEvent = {
   id: string;
   type: string;
@@ -42,7 +44,13 @@ export type PlanInput = {
   now: number;
   tz: string;
   name: string;
-  settings: { alertFeedHours?: number; alertFeedLeadMin?: number; alertPoopDays?: number; alertDailySummary?: boolean };
+  settings: {
+    alertFeedHours?: number;
+    alertFeedLeadMin?: number;
+    alertPoopDays?: number;
+    alertDailySummary?: boolean;
+    birthDate?: string;
+  };
   timerActive: boolean;
   events: PlanEvent[]; // mais recentes primeiro (ou qualquer ordem)
   health?: PlanHealth[];
@@ -50,6 +58,18 @@ export type PlanInput = {
   vaccines: Record<string, PlanVaccine>;
   vaccineNames?: Record<string, string>;
 };
+
+/** Meses completos e quantos dias se passaram desde o último "mesversário", no fuso dado. */
+export function monthsAndDays(birthDate: string, now: number, tz: string): { months: number; days: number } | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(birthDate);
+  if (!m) return null;
+  const by = +m[1], bm = +m[2], bd = +m[3];
+  const t = parts(now, tz);
+  let months = (t.y - by) * 12 + (t.mo - bm) - (t.d < bd ? 1 : 0);
+  if (months < 0) return null;
+  const anchor = Math.round(Date.UTC(by, bm - 1 + months, bd) / DAY);
+  return { months, days: localDay(now, tz) - anchor };
+}
 
 export type PlannedPush = { key: string; title: string; body: string };
 
@@ -194,6 +214,19 @@ export function planPushes(input: PlanInput): PlannedPush[] {
       if (sleepSec > 0) pieces.push(`sono ${dur(sleepSec / 60)}`);
       if (diapers.length > 0) pieces.push(`${diapers.length} fralda${diapers.length === 1 ? "" : "s"} (${poops} coco${poops === 1 ? "" : "s"})`);
       out.push({ key: `daily:${today}`, title: `Resumo do dia — ${name}`, body: pieces.join(" • ") + "." });
+    }
+  }
+
+  /* ---------- mesversário: abre a janela de desenvolvimento do mês ---------- */
+  if (settings.birthDate && localHour(now, tz) >= 9) {
+    const age = monthsAndDays(settings.birthDate, now, tz);
+    if (age && age.months >= 1 && age.months <= 24 && age.days >= 0 && age.days <= 2) {
+      const w = devMonthFor(age.months);
+      out.push({
+        key: `dev:${age.months}`,
+        title: `${name} fez ${age.months} ${age.months === 1 ? "mês" : "meses"}!`,
+        body: `Nova janela de desenvolvimento: ${w.tema}. Veja os marcos e os estímulos do mês.`,
+      });
     }
   }
 

@@ -161,6 +161,7 @@ export type Settings = {
   alertSleepHours: number; // 0 = desligado
   alertPoopDays: number; // avisar se passar X dias sem coco (0 = desligado)
   alertDailySummary: boolean; // aviso à noite com o resumo do dia
+  devChecks?: Record<string, "sim" | "comecando">; // marcos do desenvolvimento já vistos (id do marco)
 };
 
 export const DEFAULT_SETTINGS: Settings = {

@@ -11,6 +11,7 @@ const ITEMS: { id: Screen; label: string; hint: string; icon: IconName }[] = [
   { id: "saude", label: "Saúde", hint: "Remédios, febre e humor", icon: "pill" },
   { id: "consultas", label: "Consultas", hint: "Agenda do pediatra e como foi", icon: "stethoscope" },
   { id: "vacinas", label: "Vacinas", hint: "Calendário do 1º ano", icon: "syringe" },
+  { id: "desenvolvimento", label: "Desenvolvimento", hint: "Estímulos e marcos mês a mês", icon: "smile" },
   { id: "marcos", label: "Marcos", hint: "Primeiras vezes e fotos", icon: "star" },
   { id: "sons", label: "Sons de ninar", hint: "Ruído branco e chuva", icon: "music" },
   { id: "relatorio", label: "Relatório", hint: "PDF para o pediatra", icon: "file" },

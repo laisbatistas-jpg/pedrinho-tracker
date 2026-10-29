@@ -69,6 +69,7 @@ export async function GET(request: Request) {
         alertFeedLeadMin?: number;
         alertPoopDays?: number;
         alertDailySummary?: boolean;
+        birthDate?: string;
       };
       const timerRow = others.find((r) => r.kind === "timer" && r.id === "main");
       const timerActive = Boolean((timerRow?.data as { active?: unknown } | null)?.active);
