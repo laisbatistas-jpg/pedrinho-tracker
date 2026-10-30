@@ -21,6 +21,7 @@ import { SoundsScreen } from "@/components/screens/Sounds";
 import { ReportScreen } from "@/components/screens/Report";
 import { SettingsScreen } from "@/components/screens/Settings";
 import { useApp } from "@/lib/app";
+import { useWakeLock } from "@/lib/wakeLock";
 import type { Screen } from "@/lib/nav";
 import { ageLabel, formatDayLong, formatDayShort } from "@/lib/utils";
 
@@ -53,6 +54,9 @@ export default function Home() {
     if (app.timer) setScreen(app.timer.type === "sono" ? "sono" : "amamentacao");
   }, [app.ready, app.timer, restored]);
 
+  // tela ligada enquanto houver cronômetro
+  const awake = useWakeLock(!!app.timer && app.prefs.keepAwake !== false);
+
   // modo noturno
   useEffect(() => {
     document.documentElement.classList.toggle("night", app.prefs.nightMode);
@@ -71,9 +75,9 @@ export default function Home() {
   const age = settings.birthDate && now ? ageLabel(settings.birthDate, now) : "";
   const subtitle =
     timer?.type === "sono"
-      ? `Shhh… ${name} está dormindo`
+      ? `Shhh… ${name} está dormindo${awake === "on" ? " • tela ligada" : ""}`
       : timer?.type === "amamentacao"
-        ? "Mamando agora"
+        ? `Mamando agora${awake === "on" ? " • tela ligada" : ""}`
         : [age, now ? (age ? formatDayShort(now) : formatDayLong(now)) : ""].filter(Boolean).join(" • ");
 
   const activeTab: Screen = MORE_SCREENS.includes(screen) ? "mais" : screen;

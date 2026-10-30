@@ -395,6 +395,12 @@ export function SettingsScreen({ app, go }: ScreenProps) {
           label="Modo noturno extra-escuro"
           hint="Reduz o brilho e tira o azul. Ótimo para mamadas de madrugada."
         />
+        <Toggle
+          on={prefs.keepAwake !== false}
+          onChange={(v) => app.setPrefs({ keepAwake: v })}
+          label="Manter a tela ligada com cronômetro"
+          hint="Enquanto a mamada ou o sono estiver cronometrando, a tela não apaga sozinha."
+        />
       </section>
 
       <section className="glass p-5">

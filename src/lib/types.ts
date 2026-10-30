@@ -186,6 +186,7 @@ export type Prefs = {
   lastPull: number;
   who: string; // quem usa este aparelho (aparece nos registros)
   whoAsked: boolean;
+  keepAwake?: boolean; // tela ligada durante cronômetros (padrão: ligado)
 };
 
 export const DEFAULT_PREFS: Prefs = {
