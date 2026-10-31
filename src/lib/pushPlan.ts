@@ -49,6 +49,7 @@ export type PlanInput = {
     alertFeedLeadMin?: number;
     alertPoopDays?: number;
     alertDailySummary?: boolean;
+    alertWater?: boolean;
     birthDate?: string;
   };
   timerActive: boolean;
@@ -140,20 +141,21 @@ export function planPushes(input: PlanInput): PlannedPush[] {
       const dueAt = last.timestamp + intervalMin * MIN;
       const lead = Math.max(0, settings.alertFeedLeadMin ?? 0) * MIN;
       const every = dur(intervalMin);
+      const water = settings.alertWater === false ? "" : " 💧 Aproveite e beba um copo de água!";
       if (now >= dueAt) {
         // não insiste se o app ficou sem uso por muito tempo
         if (now - dueAt < 4 * 60 * MIN) {
           out.push({
             key: `feed:${last.id}:due`,
             title: `Hora da mamada! (${name})`,
-            body: `Faz ${dur((now - last.timestamp) / MIN)} desde a última (intervalo de ${every}).`,
+            body: `Faz ${dur((now - last.timestamp) / MIN)} desde a última (intervalo de ${every}).${water}`,
           });
         }
       } else if (lead > 0 && now >= dueAt - lead) {
         out.push({
           key: `feed:${last.id}:soon`,
           title: `Mamada em ${Math.max(1, Math.ceil((dueAt - now) / MIN))} min (${name})`,
-          body: `Prevista para ${clockOf(dueAt, tz)} (intervalo de ${every}).`,
+          body: `Prevista para ${clockOf(dueAt, tz)} (intervalo de ${every}).${water}`,
         });
       }
     }

@@ -297,6 +297,12 @@ export function SettingsScreen({ app, go }: ScreenProps) {
           </p>
         </Field>
         <Toggle
+          on={settings.alertWater !== false}
+          onChange={(v) => patch({ alertWater: v })}
+          label="Lembrar de beber água na hora da mamada"
+          hint="O aviso de mamada ganha um lembrete: “beba um copo de água”."
+        />
+        <Toggle
           on={settings.alertDailySummary}
           onChange={(v) => patch({ alertDailySummary: v })}
           label="Resumo do dia às 21h"

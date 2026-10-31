@@ -259,7 +259,7 @@ export function useApp() {
           episode: `${lastFeed.id}:due`,
           tone: "warn",
           title: "Hora da mamada!",
-          text: `Faz ${formatDur(Math.floor((nowTs - lastFeed.timestamp) / 1000))} desde a última (intervalo de ${every}).`,
+          text: `Faz ${formatDur(Math.floor((nowTs - lastFeed.timestamp) / 1000))} desde a última (intervalo de ${every}).${settings.alertWater === false ? "" : " 💧 Beba um copo de água!"}`,
         });
       } else if (lead > 0 && nowTs >= dueAt - lead) {
         list.push({

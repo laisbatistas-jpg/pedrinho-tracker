@@ -161,6 +161,7 @@ export type Settings = {
   alertSleepHours: number; // 0 = desligado
   alertPoopDays: number; // avisar se passar X dias sem coco (0 = desligado)
   alertDailySummary: boolean; // aviso à noite com o resumo do dia
+  alertWater?: boolean; // lembrar a mãe de beber água junto do aviso de mamada (padrão: ligado)
   devChecks?: Record<string, "sim" | "comecando">; // marcos do desenvolvimento já vistos (id do marco)
   devDid?: Record<string, number>; // estímulos já feitos: "mês-posição" -> quando
 };
