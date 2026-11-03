@@ -28,6 +28,20 @@ function sinceLabel(ts: number, now: number): string {
 }
 const AREA_ORDER: DevArea[] = ["mov", "soc", "ling", "cog"];
 
+function DidButton({ done, onClick }: { done: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`mt-3 w-full rounded-2xl px-4 py-3 text-base font-bold flex items-center justify-center gap-2 ${
+        done ? "border border-[#5db77a]/60 text-[#8fe0a8] bg-[#5db77a]/10" : "btn-green"
+      }`}
+    >
+      <Icon name="check" className="w-5 h-5" />
+      {done ? "Feito! (desmarcar)" : "Já fizemos hoje"}
+    </button>
+  );
+}
+
 export function DevelopmentScreen({ app, go }: ScreenProps) {
   const { settings, now } = app;
   const name = settings.name || "Pedrinho";
@@ -150,6 +164,7 @@ export function DevelopmentScreen({ app, go }: ScreenProps) {
           <p className="font-semibold mt-0.5">{today.titulo}</p>
           <p className="text-sm mt-1 leading-relaxed">{today.como}</p>
           <p className="text-xs text-[var(--muted)] mt-1.5">Treina: {today.treina}</p>
+          <DidButton done={!!did[`${d.month}-${(dayIdx % d.estimulos.length)}`]} onClick={() => setDid(`${d.month}-${(dayIdx % d.estimulos.length)}`, did[`${d.month}-${(dayIdx % d.estimulos.length)}`] ? undefined : Date.now())} />
         </div>
         <ul className="divide-y divide-white/10">
           {d.estimulos.map((e, i) => {
@@ -182,13 +197,8 @@ export function DevelopmentScreen({ app, go }: ScreenProps) {
                 {open === i && (
                   <div className="pb-3 -mt-1 pl-9">
                     <p className="text-sm leading-relaxed">{e.como}</p>
+                    <DidButton done={!!when} onClick={() => setDid(key, when ? undefined : Date.now())} />
                     {DEV_ART[`${d.month}:${e.titulo}`] && <Sequence panels={DEV_ART[`${d.month}:${e.titulo}`]} />}
-                    <button
-                      onClick={() => setDid(key, when ? undefined : Date.now())}
-                      className={`mt-2.5 rounded-full px-4 py-2 text-sm font-semibold ${when ? "border border-white/20 text-[var(--muted)]" : "btn-grad"}`}
-                    >
-                      {when ? "Desmarcar" : "Já fizemos hoje"}
-                    </button>
                   </div>
                 )}
               </li>

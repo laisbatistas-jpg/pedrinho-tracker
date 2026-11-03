@@ -168,7 +168,7 @@ export function useApp() {
     // intervalo combinado (Configurações) tem prioridade sobre a média observada
     const feedIntervalConfigured = settings.alertFeedHours > 0;
     const feedIntervalMin = feedIntervalConfigured ? Math.round(settings.alertFeedHours * 60) : avgFeedInterval;
-    const nextFeedAt = lastFeed ? lastFeed.timestamp + feedIntervalMin * 60000 : null;
+    const nextFeedAt = lastFeed ? eventEnd(lastFeed) + feedIntervalMin * 60000 : null;
     const nextFeedMin =
       nextFeedAt && nowTs ? Math.max(0, Math.ceil((nextFeedAt - nowTs) / 60000)) : null;
 
@@ -250,7 +250,7 @@ export function useApp() {
 
     const { lastFeed, feedIntervalMin } = derived;
     if (settings.alertFeedHours > 0 && !timer && lastFeed) {
-      const dueAt = lastFeed.timestamp + feedIntervalMin * 60000;
+      const dueAt = eventEnd(lastFeed) + feedIntervalMin * 60000;
       const lead = Math.max(0, settings.alertFeedLeadMin || 0) * 60000;
       const every = formatDur(feedIntervalMin * 60);
       if (nowTs >= dueAt) {
@@ -259,7 +259,7 @@ export function useApp() {
           episode: `${lastFeed.id}:due`,
           tone: "warn",
           title: "Hora da mamada!",
-          text: `Faz ${formatDur(Math.floor((nowTs - lastFeed.timestamp) / 1000))} desde a última (intervalo de ${every}).${settings.alertWater === false ? "" : " 💧 Beba um copo de água!"}`,
+          text: `Faz ${formatDur(Math.floor((nowTs - eventEnd(lastFeed)) / 1000))} desde o fim da última (intervalo de ${every}).${settings.alertWater === false ? "" : " 💧 Beba um copo de água!"}`,
         });
       } else if (lead > 0 && nowTs >= dueAt - lead) {
         list.push({

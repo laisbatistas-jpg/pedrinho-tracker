@@ -11,6 +11,7 @@ export type PlanEvent = {
   type: string;
   timestamp: number;
   duration?: number; // segundos
+  endTimestamp?: number;
   diaper?: string;
   ml?: number;
 };
@@ -138,7 +139,9 @@ export function planPushes(input: PlanInput): PlannedPush[] {
     const last = feeds.reduce<PlanEvent | null>((a, e) => (!a || e.timestamp > a.timestamp ? e : a), null);
     if (last) {
       const intervalMin = Math.round(hours * 60);
-      const dueAt = last.timestamp + intervalMin * MIN;
+      // o intervalo conta a partir do FIM da mamada, não do começo
+      const lastEnd = last.endTimestamp ?? last.timestamp + (last.duration ?? 0) * 1000;
+      const dueAt = lastEnd + intervalMin * MIN;
       const lead = Math.max(0, settings.alertFeedLeadMin ?? 0) * MIN;
       const every = dur(intervalMin);
       const water = settings.alertWater === false ? "" : " 💧 Aproveite e beba um copo de água!";
@@ -148,7 +151,7 @@ export function planPushes(input: PlanInput): PlannedPush[] {
           out.push({
             key: `feed:${last.id}:due`,
             title: `Hora da mamada! (${name})`,
-            body: `Faz ${dur((now - last.timestamp) / MIN)} desde a última (intervalo de ${every}).${water}`,
+            body: `Faz ${dur((now - lastEnd) / MIN)} desde o fim da última (intervalo de ${every}).${water}`,
           });
         }
       } else if (lead > 0 && now >= dueAt - lead) {
