@@ -163,7 +163,7 @@ export default function Home() {
                   className="relative flex-1 flex flex-col items-center"
                 >
                   <span
-                    className={`btn-grad -mt-7 w-[3.75rem] h-[3.75rem] rounded-full grid place-items-center border-4 border-[#0c1226] shadow-[0_0_22px_-2px_rgba(139,92,246,0.9)] ${
+                    className={`bg-[#f5ecd7] text-[#4c1d95] -mt-7 w-[3.75rem] h-[3.75rem] rounded-full grid place-items-center border-4 border-[#0c1226] shadow-[0_0_22px_-2px_rgba(245,236,215,0.55)] ${
                       active ? "ring-2 ring-white/70" : ""
                     }`}
                   >
